@@ -8,6 +8,7 @@ import {
   Target,
 } from "lucide-react";
 import StudentNavigation from "./StudentNavigation";
+import learningCourses from "./learningData";
 import "./StudentDashboard.css";
 
 const dashboardCourses = [
@@ -141,50 +142,62 @@ function StudentDashboard() {
           </div>
 
           <div className="student-dashboard-course-list">
-            {dashboardCourses.map((course) => (
-              <article
-                className="student-dashboard-course"
-                key={course.id}
-              >
-                <div
-                  className={`student-dashboard-course-icon ${course.color}`}
+            {dashboardCourses.map((course) => {
+              const hasWorkspace = learningCourses.some(
+                (item) => item.slug === course.slug
+              );
+
+              return (
+                <article
+                  className="student-dashboard-course"
+                  key={course.id}
                 >
-                  <BookOpen size={24} />
-                </div>
-
-                <div className="student-dashboard-course-info">
-                  <p className="student-dashboard-course-category">
-                    {course.category}
-                  </p>
-
-                  <h3>{course.title}</h3>
-
-                  <div className="student-dashboard-progress">
-                    <div className="student-dashboard-progress-track">
-                      <div
-                        className="student-dashboard-progress-fill"
-                        style={{ width: `${course.progress}%` }}
-                      />
-                    </div>
-
-                    <span>{course.progress}%</span>
+                  <div
+                    className={`student-dashboard-course-icon ${course.color}`}
+                  >
+                    <BookOpen size={24} />
                   </div>
 
-                  <p className="student-dashboard-course-lessons">
-                    {course.completedLessons} of {course.totalLessons}{" "}
-                    lessons completed
-                  </p>
-                </div>
+                  <div className="student-dashboard-course-info">
+                    <p className="student-dashboard-course-category">
+                      {course.category}
+                    </p>
 
-                <Link
-                  to={`/courses/${course.slug}`}
-                  className="student-dashboard-continue"
-                  aria-label={`Continue ${course.title}`}
-                >
-                  <PlayCircle size={21} />
-                </Link>
-              </article>
-            ))}
+                    <h3>{course.title}</h3>
+
+                    <div className="student-dashboard-progress">
+                      <div className="student-dashboard-progress-track">
+                        <div
+                          className="student-dashboard-progress-fill"
+                          style={{ width: `${course.progress}%` }}
+                        />
+                      </div>
+
+                      <span>{course.progress}%</span>
+                    </div>
+
+                    <p className="student-dashboard-course-lessons">
+                      {course.completedLessons} of {course.totalLessons}{" "}
+                      lessons completed
+                    </p>
+                  </div>
+
+                  <Link
+                    to={
+                      hasWorkspace
+                        ? `/learn/${course.slug}`
+                        : "/courses"
+                    }
+                    className="student-dashboard-continue"
+                    aria-label={`${
+                      hasWorkspace ? "Continue" : "Browse"
+                    } ${course.title}`}
+                  >
+                    <PlayCircle size={21} />
+                  </Link>
+                </article>
+              );
+            })}
           </div>
         </div>
 

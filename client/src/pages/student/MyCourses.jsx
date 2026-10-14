@@ -8,6 +8,7 @@ import {
   Search,
 } from "lucide-react";
 import StudentNavigation from "./StudentNavigation";
+import learningCourses from "./learningData";
 import "./MyCourses.css";
 
 const myCourses = [
@@ -19,7 +20,6 @@ const myCourses = [
     completedLessons: 13,
     totalLessons: 20,
     slug: "web-development-fundamentals",
-    status: "In Progress",
     color: "blue",
   },
   {
@@ -30,7 +30,6 @@ const myCourses = [
     completedLessons: 6,
     totalLessons: 20,
     slug: "introduction-to-business",
-    status: "In Progress",
     color: "gold",
   },
   {
@@ -41,7 +40,6 @@ const myCourses = [
     completedLessons: 2,
     totalLessons: 20,
     slug: "creative-design-essentials",
-    status: "In Progress",
     color: "purple",
   },
 ];
@@ -143,7 +141,9 @@ function MyCourses() {
         <div className="my-courses-toolbar">
           <div>
             <h2>Your Course Library</h2>
-            <p>Find a course and continue your learning journey.</p>
+            <p>
+              Find a course and continue your learning journey.
+            </p>
           </div>
 
           <label className="my-courses-search">
@@ -178,55 +178,70 @@ function MyCourses() {
 
         {filteredCourses.length > 0 ? (
           <div className="my-courses-grid">
-            {filteredCourses.map((course) => (
-              <article className="my-course-card" key={course.id}>
-                <div
-                  className={`my-course-card-icon ${course.color}`}
-                >
-                  <BookOpen size={27} />
-                </div>
+            {filteredCourses.map((course) => {
+              const hasWorkspace = learningCourses.some(
+                (item) => item.slug === course.slug
+              );
 
-                <div className="my-course-card-content">
-                  <p className="my-course-category">{course.category}</p>
-                  <h3>{course.title}</h3>
+              const coursePath = hasWorkspace
+                ? `/learn/${course.slug}`
+                : `/courses/${course.slug}`;
 
-                  <span className="my-course-status">
-                    {course.progress === 100
-                      ? "Completed"
-                      : course.progress === 0
-                        ? "Not Started"
-                        : "In Progress"}
-                  </span>
-
-                  <div className="my-course-progress-heading">
-                    <span>Course progress</span>
-                    <strong>{course.progress}%</strong>
-                  </div>
-
-                  <div className="my-course-progress-track">
-                    <div
-                      className="my-course-progress-fill"
-                      style={{ width: `${course.progress}%` }}
-                    />
-                  </div>
-
-                  <p className="my-course-lessons">
-                    {course.completedLessons} of {course.totalLessons}{" "}
-                    lessons completed
-                  </p>
-
-                  <Link
-                    to={`/courses/${course.slug}`}
-                    className="my-course-continue"
+              return (
+                <article className="my-course-card" key={course.id}>
+                  <div
+                    className={`my-course-card-icon ${course.color}`}
                   >
-                    {course.progress === 100
-                      ? "Review Course"
-                      : "Continue Learning"}
-                    <PlayCircle size={18} />
-                  </Link>
-                </div>
-              </article>
-            ))}
+                    <BookOpen size={27} />
+                  </div>
+
+                  <div className="my-course-card-content">
+                    <p className="my-course-category">
+                      {course.category}
+                    </p>
+
+                    <h3>{course.title}</h3>
+
+                    <span className="my-course-status">
+                      {course.progress === 100
+                        ? "Completed"
+                        : course.progress === 0
+                          ? "Not Started"
+                          : "In Progress"}
+                    </span>
+
+                    <div className="my-course-progress-heading">
+                      <span>Course progress</span>
+                      <strong>{course.progress}%</strong>
+                    </div>
+
+                    <div className="my-course-progress-track">
+                      <div
+                        className="my-course-progress-fill"
+                        style={{ width: `${course.progress}%` }}
+                      />
+                    </div>
+
+                    <p className="my-course-lessons">
+                      {course.completedLessons} of {course.totalLessons}{" "}
+                      lessons completed
+                    </p>
+
+                    <Link
+                      to={coursePath}
+                      className="my-course-continue"
+                    >
+                      {course.progress === 100
+                        ? "Review Course"
+                        : hasWorkspace
+                          ? "Continue Learning"
+                          : "View Course"}
+                      <PlayCircle size={18} />
+                    </Link>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         ) : (
           <div className="my-courses-empty">
@@ -235,6 +250,7 @@ function MyCourses() {
             <p>
               Try a different search term or select another filter.
             </p>
+
             <button
               type="button"
               onClick={() => {
