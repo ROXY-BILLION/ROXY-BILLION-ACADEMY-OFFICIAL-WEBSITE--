@@ -9,16 +9,10 @@ import CourseDetails from "../pages/public/CourseDetails";
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
 import ForgotPassword from "../pages/auth/ForgotPassword";
+import ResetPassword from "../pages/auth/ResetPassword";
+import StudentDashboard from "../pages/student/StudentDashboard";
 
-function AuthPlaceholder({ title }) {
-  return (
-    <section className="public-placeholder">
-      <p className="home-section-eyebrow">ROXY BILLION ACADEMY</p>
-      <h1>{title}</h1>
-      <p>Authentication screens will be developed in Part 7.</p>
-    </section>
-  );
-}
+
 
 function NotFound() {
   return (
@@ -47,10 +41,8 @@ function AppRoutes() {
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
         <Route path="forgot-password" element={<ForgotPassword />} />
-        <Route
-          path="reset-password"
-          element={<AuthPlaceholder title="Choose a new password" />}
-        />
+        <Route path="reset-password" element={<ResetPassword />} />
+        <Route path="dashboard" element={<StudentDashboard />} />
       </Route>
 
       <Route path="/404" element={<NotFound />} />
