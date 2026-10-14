@@ -11,6 +11,8 @@ import Register from "../pages/auth/Register";
 import ForgotPassword from "../pages/auth/ForgotPassword";
 import ResetPassword from "../pages/auth/ResetPassword";
 import StudentDashboard from "../pages/student/StudentDashboard";
+import MyCourses from "../pages/student/MyCourses";
+
 
 
 
@@ -43,6 +45,7 @@ function AppRoutes() {
         <Route path="forgot-password" element={<ForgotPassword />} />
         <Route path="reset-password" element={<ResetPassword />} />
         <Route path="dashboard" element={<StudentDashboard />} />
+        <Route path="my-courses" element={<MyCourses />} />
       </Route>
 
       <Route path="/404" element={<NotFound />} />
