@@ -4,19 +4,9 @@ import Home from "../pages/public/Home";
 import About from "../pages/public/About";
 import Pricing from "../pages/public/Pricing";
 import Contact from "../pages/public/Contact";
+import Courses from "../pages/public/Courses";
 
-function CoursesPlaceholder() {
-  return (
-    <section className="public-placeholder">
-      <p className="home-section-eyebrow">EXPLORE YOUR POSSIBILITIES</p>
-      <h1>Find your next learning opportunity.</h1>
-      <p>
-        The course catalogue, dynamic categories, and course detail pages
-        will be built in Part 4.
-      </p>
-    </section>
-  );
-}
+
 
 function AuthPlaceholder({ title }) {
   return (
@@ -47,8 +37,8 @@ function AppRoutes() {
       <Route element={<PublicLayout />}>
         <Route index element={<Home />} />
         <Route path="about" element={<About />} />
-        <Route path="courses" element={<CoursesPlaceholder />} />
-        <Route path="courses/:slug" element={<CoursesPlaceholder />} />
+        <Route path="courses" element={<Courses />} />
+        <Route path="courses/:slug" element={<Courses />} />
         <Route path="pricing" element={<Pricing />} />
         <Route path="contact" element={<Contact />} />
         <Route path="login" element={<AuthPlaceholder title="Welcome back" />} />
