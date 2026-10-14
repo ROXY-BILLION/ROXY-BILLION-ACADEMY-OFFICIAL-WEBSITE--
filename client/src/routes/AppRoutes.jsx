@@ -14,6 +14,8 @@ import StudentDashboard from "../pages/student/StudentDashboard";
 import MyCourses from "../pages/student/MyCourses";
 import LearningWorkspace from "../pages/student/LearningWorkspace";
 import Certificates from "../pages/student/Certificates";
+import FreeAIGuide from "../pages/student/FreeAIGuide";
+import StudentSettings from "../pages/student/StudentSettings";
 
 function NotFound() {
   return (
@@ -47,11 +49,12 @@ function AppRoutes() {
         <Route path="dashboard" element={<StudentDashboard />} />
         <Route path="my-courses" element={<MyCourses />} />
         <Route path="certificates" element={<Certificates />} />
-
+        <Route path="ai-guide" element={<FreeAIGuide />} />
         <Route
           path="learn/:slug"
           element={<LearningWorkspace />}
         />
+        <Route path="settings" element={<StudentSettings />} />
       </Route>
 
       <Route path="/404" element={<NotFound />} />

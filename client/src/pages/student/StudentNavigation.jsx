@@ -4,6 +4,7 @@ import {
   BookOpen,
   Compass,
   Award,
+    Bot,
   Settings,
 } from "lucide-react";
 import "./StudentNavigation.css";
@@ -36,6 +37,11 @@ const navigationItems = [
     path: "/settings",
     icon: Settings,
   },
+  {
+  label: "Free AI Guide",
+  path: "/ai-guide",
+  icon: Bot,
+},
 ];
 
 function StudentNavigation() {
