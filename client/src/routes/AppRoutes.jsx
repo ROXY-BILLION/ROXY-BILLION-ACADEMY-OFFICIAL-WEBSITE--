@@ -13,6 +13,7 @@ import ResetPassword from "../pages/auth/ResetPassword";
 import StudentDashboard from "../pages/student/StudentDashboard";
 import MyCourses from "../pages/student/MyCourses";
 import LearningWorkspace from "../pages/student/LearningWorkspace";
+import Certificates from "../pages/student/Certificates";
 
 function NotFound() {
   return (
@@ -45,6 +46,7 @@ function AppRoutes() {
 
         <Route path="dashboard" element={<StudentDashboard />} />
         <Route path="my-courses" element={<MyCourses />} />
+        <Route path="certificates" element={<Certificates />} />
 
         <Route
           path="learn/:slug"
