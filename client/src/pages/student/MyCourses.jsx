@@ -7,6 +7,7 @@ import {
   PlayCircle,
   GraduationCap,
 } from "lucide-react";
+import StudentNavigation from "../../components/student/StudentNavigation";
 import "./MyCourses.css";
 
 const enrolledCourses = [
@@ -73,18 +74,32 @@ function MyCourses() {
       activeFilter === "All Courses" ||
       course.status === activeFilter;
 
+    const search = searchTerm.trim().toLowerCase();
+
     const matchesSearch =
-      course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.category.toLowerCase().includes(searchTerm.toLowerCase());
+      course.title.toLowerCase().includes(search) ||
+      course.category.toLowerCase().includes(search);
 
     return matchesFilter && matchesSearch;
   });
 
+  const inProgressCount = enrolledCourses.filter(
+    (course) => course.status === "In Progress"
+  ).length;
+
+  const completedCount = enrolledCourses.filter(
+    (course) => course.status === "Completed"
+  ).length;
+
   return (
     <main className="my-courses-page">
+      <StudentNavigation />
+
       <section className="my-courses-header">
         <div>
-          <span className="my-courses-eyebrow">YOUR LEARNING SPACE</span>
+          <span className="my-courses-eyebrow">
+            YOUR LEARNING SPACE
+          </span>
           <h1>My Courses</h1>
           <p>
             Keep learning, track your progress, and work toward your goals.
@@ -97,7 +112,10 @@ function MyCourses() {
         </Link>
       </section>
 
-      <section className="my-courses-summary">
+      <section
+        className="my-courses-summary"
+        aria-label="Course summary"
+      >
         <article className="course-summary-card">
           <div className="summary-icon">
             <BookOpen size={21} />
@@ -114,11 +132,7 @@ function MyCourses() {
           </div>
           <div>
             <span>In Progress</span>
-            <strong>
-              {enrolledCourses.filter(
-                (course) => course.status === "In Progress"
-              ).length}
-            </strong>
+            <strong>{inProgressCount}</strong>
           </div>
         </article>
 
@@ -128,18 +142,14 @@ function MyCourses() {
           </div>
           <div>
             <span>Completed</span>
-            <strong>
-              {enrolledCourses.filter(
-                (course) => course.status === "Completed"
-              ).length}
-            </strong>
+            <strong>{completedCount}</strong>
           </div>
         </article>
       </section>
 
       <section className="my-courses-content">
         <div className="my-courses-toolbar">
-          <div className="course-filter-tabs">
+          <div className="course-filter-tabs" aria-label="Filter courses">
             {filters.map((filter) => (
               <button
                 key={filter}
@@ -147,6 +157,7 @@ function MyCourses() {
                 className={
                   activeFilter === filter ? "active" : ""
                 }
+                aria-pressed={activeFilter === filter}
                 onClick={() => setActiveFilter(filter)}
               >
                 {filter}
@@ -155,10 +166,11 @@ function MyCourses() {
           </div>
 
           <label className="course-search">
-            <Search size={18} />
+            <Search size={18} aria-hidden="true" />
             <input
               type="search"
               placeholder="Search your courses..."
+              aria-label="Search your courses"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
             />
@@ -168,12 +180,15 @@ function MyCourses() {
         {filteredCourses.length > 0 ? (
           <div className="my-courses-grid">
             {filteredCourses.map((course) => (
-              <article className="enrolled-course-card" key={course.id}>
+              <article
+                className="enrolled-course-card"
+                key={course.id}
+              >
                 <div
                   className={`enrolled-course-banner ${course.color}`}
                 >
                   <span>{course.category}</span>
-                  <BookOpen size={38} />
+                  <BookOpen size={38} aria-hidden="true" />
                 </div>
 
                 <div className="enrolled-course-body">
@@ -185,6 +200,7 @@ function MyCourses() {
                   </div>
 
                   <h2>{course.title}</h2>
+
                   <p className="enrolled-course-description">
                     {course.description}
                   </p>
@@ -231,7 +247,7 @@ function MyCourses() {
           </div>
         ) : (
           <div className="my-courses-empty">
-            <BookOpen size={42} />
+            <BookOpen size={42} aria-hidden="true" />
             <h2>No courses found</h2>
             <p>
               Try another search or choose a different course filter.
