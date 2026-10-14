@@ -5,7 +5,7 @@ import About from "../pages/public/About";
 import Pricing from "../pages/public/Pricing";
 import Contact from "../pages/public/Contact";
 import Courses from "../pages/public/Courses";
-
+import CourseDetails from "../pages/public/CourseDetails";
 
 
 function AuthPlaceholder({ title }) {
@@ -38,7 +38,7 @@ function AppRoutes() {
         <Route index element={<Home />} />
         <Route path="about" element={<About />} />
         <Route path="courses" element={<Courses />} />
-        <Route path="courses/:slug" element={<Courses />} />
+        <Route path="courses/:slug" element={<CourseDetails />} />
         <Route path="pricing" element={<Pricing />} />
         <Route path="contact" element={<Contact />} />
         <Route path="login" element={<AuthPlaceholder title="Welcome back" />} />
