@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import {
-  ArrowRight,
   Mail,
   MessageCircle,
+  Clock,
   Send,
-  ShieldCheck,
+  CheckCircle,
+  AlertCircle,
+  ArrowRight,
 } from "lucide-react";
 import "./Contact.css";
 
@@ -18,7 +19,7 @@ const initialForm = {
 
 function Contact() {
   const [form, setForm] = useState(initialForm);
-  const [feedback, setFeedback] = useState({
+  const [status, setStatus] = useState({
     type: "",
     message: "",
   });
@@ -31,8 +32,8 @@ function Contact() {
       [name]: value,
     }));
 
-    if (feedback.message) {
-      setFeedback({ type: "", message: "" });
+    if (status.message) {
+      setStatus({ type: "", message: "" });
     }
   }
 
@@ -45,9 +46,9 @@ function Contact() {
     const message = form.message.trim();
 
     if (!name || !email || !subject || !message) {
-      setFeedback({
+      setStatus({
         type: "error",
-        message: "Please complete every field before continuing.",
+        message: "Please complete all fields before continuing.",
       });
       return;
     }
@@ -55,132 +56,110 @@ function Contact() {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailPattern.test(email)) {
-      setFeedback({
+      setStatus({
         type: "error",
         message: "Please enter a valid email address.",
       });
       return;
     }
 
-    setFeedback({
+    setStatus({
       type: "success",
       message:
-        "Your form passed validation. Actual message delivery will be enabled when the backend is connected.",
+        "Your form passed validation. Message delivery will be enabled when the backend contact workflow is connected.",
     });
+
+    setForm(initialForm);
   }
 
   return (
     <div className="contact-page">
       <section className="contact-hero">
-        <div className="contact-container contact-hero-grid">
-          <div className="contact-hero-copy">
-            <p className="contact-eyebrow">
-              <MessageCircle size={16} />
-              WE'RE HERE TO HELP
-            </p>
+        <div className="contact-hero-content">
+          <span className="contact-eyebrow">WE'RE HERE TO HELP</span>
 
-            <h1>
-              Let's start a <span>conversation.</span>
-            </h1>
+          <h1>
+            Let's start a <span>conversation.</span>
+          </h1>
 
-            <p className="contact-hero-description">
-              Have a question about our courses, learning experience, or
-              academy? Reach out to us. We would love to hear from you.
-            </p>
-
-            <div className="contact-hero-actions">
-              <a href="#contact-form" className="contact-primary-button">
-                Send a message
-                <ArrowRight size={18} />
-              </a>
-
-              <Link to="/courses" className="contact-secondary-button">
-                Explore courses
-              </Link>
-            </div>
-
-            <div className="contact-trust-note">
-              <ShieldCheck size={19} />
-              <span>Your information should be shared securely.</span>
-            </div>
-          </div>
-
-          <div className="contact-hero-card">
-            <div className="contact-card-icon">
-              <Mail size={28} />
-            </div>
-
-            <p className="contact-card-label">YOUR VOICE MATTERS</p>
-
-            <h2>Every question is a step forward.</h2>
-
-            <p>
-              Whether you're a prospective student, a current learner, or
-              someone interested in working with us, we're ready to listen.
-            </p>
-
-            <div className="contact-card-bottom">
-              <span className="contact-card-dot" />
-              <span>Learning starts with connection.</span>
-            </div>
-          </div>
+          <p>
+            Have a question about courses, learning opportunities, or
+            the academy? Send us a message and let us know how we can help.
+          </p>
         </div>
       </section>
 
       <section className="contact-main-section">
-        <div className="contact-container contact-main-grid">
-          <div className="contact-information">
-            <p className="contact-eyebrow">GET IN TOUCH</p>
+        <div className="contact-layout">
+          <aside className="contact-information">
+            <span className="contact-eyebrow">GET IN TOUCH</span>
 
             <h2>How can we help you?</h2>
 
             <p className="contact-information-description">
-              Send us your question or feedback using the form. Choose a
-              subject that best describes what you need help with.
+              Whether you're exploring your first course or looking for
+              more information, we're happy to hear from you.
             </p>
 
-            <div className="contact-information-item">
-              <div className="contact-information-icon">
-                <MessageCircle size={21} />
+            <div className="contact-information-list">
+              <div className="contact-information-item">
+                <div className="contact-information-icon">
+                  <Mail size={21} />
+                </div>
+
+                <div>
+                  <h3>Email support</h3>
+                  <p>
+                    Send us your questions using the contact form.
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <h3>General enquiries</h3>
-                <p>
-                  Questions about the academy, our mission, or learning
-                  opportunities.
-                </p>
-              </div>
-            </div>
+              <div className="contact-information-item">
+                <div className="contact-information-icon">
+                  <MessageCircle size={21} />
+                </div>
 
-            <div className="contact-information-item">
-              <div className="contact-information-icon">
-                <ShieldCheck size={21} />
+                <div>
+                  <h3>Learning enquiries</h3>
+                  <p>
+                    Ask about courses, access, and learning opportunities.
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <h3>Student support</h3>
-                <p>
-                  Help with courses, your account, learning progress, or
-                  assessments.
-                </p>
+              <div className="contact-information-item">
+                <div className="contact-information-icon">
+                  <Clock size={21} />
+                </div>
+
+                <div>
+                  <h3>Response times</h3>
+                  <p>
+                    We aim to respond as soon as our support workflow is
+                    available.
+                  </p>
+                </div>
               </div>
             </div>
 
             <div className="contact-information-note">
-              <strong>Before you send</strong>
+              <span className="contact-note-icon">
+                <CheckCircle size={19} />
+              </span>
+
               <p>
-                Please avoid including passwords, payment card details, or
-                other sensitive information in your message.
+                Your learning journey matters. Include enough detail in
+                your message so we can understand your enquiry.
               </p>
             </div>
-          </div>
+          </aside>
 
-          <div className="contact-form-card" id="contact-form">
+          <div className="contact-form-card">
             <div className="contact-form-heading">
-              <p className="contact-eyebrow">CONTACT OUR TEAM</p>
-              <h2>Send us a message</h2>
-              <p>Complete the fields below to prepare your enquiry.</p>
+              <span className="contact-eyebrow">SEND A MESSAGE</span>
+              <h2>How can we assist you?</h2>
+              <p>Complete the form below to prepare your enquiry.</p>
             </div>
 
             <form className="contact-form" onSubmit={handleSubmit} noValidate>
@@ -189,13 +168,12 @@ function Contact() {
                   <label htmlFor="contact-name">Full name</label>
                   <input
                     id="contact-name"
-                    name="name"
                     type="text"
-                    placeholder="Enter your full name"
+                    name="name"
                     value={form.name}
                     onChange={handleChange}
+                    placeholder="Enter your full name"
                     autoComplete="name"
-                    maxLength={100}
                     required
                   />
                 </div>
@@ -204,13 +182,12 @@ function Contact() {
                   <label htmlFor="contact-email">Email address</label>
                   <input
                     id="contact-email"
-                    name="email"
                     type="email"
-                    placeholder="you@example.com"
+                    name="email"
                     value={form.email}
                     onChange={handleChange}
+                    placeholder="you@example.com"
                     autoComplete="email"
-                    maxLength={254}
                     required
                   />
                 </div>
@@ -225,15 +202,14 @@ function Contact() {
                   onChange={handleChange}
                   required
                 >
-                  <option value="">Choose an enquiry subject</option>
-                  <option value="General enquiry">General enquiry</option>
-                  <option value="Courses and learning">
-                    Courses and learning
+                  <option value="">Choose a subject</option>
+                  <option value="Course enquiries">Course enquiries</option>
+                  <option value="Account support">Account support</option>
+                  <option value="Membership and pricing">
+                    Membership and pricing
                   </option>
-                  <option value="Student support">Student support</option>
-                  <option value="Account assistance">Account assistance</option>
-                  <option value="Partnership">Partnership opportunity</option>
-                  <option value="Feedback">Feedback or suggestion</option>
+                  <option value="Technical support">Technical support</option>
+                  <option value="Partnerships">Partnerships</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
@@ -243,59 +219,58 @@ function Contact() {
                 <textarea
                   id="contact-message"
                   name="message"
-                  placeholder="Tell us how we can help..."
                   value={form.message}
                   onChange={handleChange}
+                  placeholder="Tell us how we can help..."
                   rows={6}
-                  maxLength={3000}
                   required
                 />
-
-                <span className="contact-character-count">
-                  {form.message.length}/3000 characters
-                </span>
               </div>
 
-              {feedback.message && (
+              {status.message && (
                 <div
-                  className={`contact-feedback contact-feedback-${feedback.type}`}
+                  className={`contact-status contact-status-${status.type}`}
                   role="status"
                   aria-live="polite"
                 >
-                  {feedback.message}
+                  {status.type === "success" ? (
+                    <CheckCircle size={19} />
+                  ) : (
+                    <AlertCircle size={19} />
+                  )}
+
+                  <p>{status.message}</p>
                 </div>
               )}
 
-              <button type="submit" className="contact-submit-button">
+              <button className="contact-submit-button" type="submit">
                 Validate message
                 <Send size={17} />
               </button>
 
               <p className="contact-form-disclaimer">
-                This form currently runs in preview mode. Submitting it does
-                not send or store your message.
+                This form currently validates your information in the
+                browser. It does not send or store messages yet.
               </p>
             </form>
           </div>
         </div>
       </section>
 
-      <section className="contact-bottom-cta">
-        <div className="contact-container contact-bottom-cta-inner">
-          <div>
-            <p className="contact-eyebrow">YOUR NEXT CHAPTER</p>
-            <h2>Ready to discover something new?</h2>
-            <p>
-              Explore learning opportunities across different subjects and
-              start building your knowledge.
-            </p>
-          </div>
-
-          <Link to="/courses" className="contact-primary-button">
-            Explore the academy
-            <ArrowRight size={18} />
-          </Link>
+      <section className="contact-bottom-section">
+        <div>
+          <span className="contact-eyebrow">YOUR NEXT STEP STARTS HERE</span>
+          <h2>Ready to explore new possibilities?</h2>
+          <p>
+            Discover learning opportunities designed to help you grow
+            across different subjects and interests.
+          </p>
         </div>
+
+        <a className="contact-explore-link" href="/courses">
+          Explore courses
+          <ArrowRight size={17} />
+        </a>
       </section>
     </div>
   );
