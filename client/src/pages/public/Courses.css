@@ -508,3 +508,38 @@
     transform: none;
   }
 }
+.courses-hero .courses-category-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 30px;
+  padding: 12px 18px;
+  text-decoration: none;
+}
+
+.courses-search button {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  color: var(--color-muted);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.courses-search button:hover {
+  color: var(--color-primary);
+}
+
+.courses-search button:focus-visible,
+.courses-category-button:focus-visible,
+.courses-card-link:focus-visible,
+.course-card-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+

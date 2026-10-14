@@ -1,198 +1,166 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Search,
   ArrowRight,
   BookOpen,
   Clock,
   GraduationCap,
-  Layers3,
+  Search,
+  X,
 } from "lucide-react";
+import sampleCourses from "../../data/sampleCourses";
 import "./Courses.css";
 
-const sampleCourses = [
-  {
-    id: 1,
-    title: "HTML Fundamentals",
-    slug: "html-fundamentals",
-    category: "Technology",
-    level: "Beginner",
-    duration: "4 weeks",
-    lessons: 12,
-    description:
-      "Learn how web pages are structured and build a solid foundation in HTML.",
-    icon: "code",
-    featured: true,
-  },
-  {
-    id: 2,
-    title: "CSS and Web Design",
-    slug: "css-and-web-design",
-    category: "Technology",
-    level: "Beginner",
-    duration: "6 weeks",
-    lessons: 16,
-    description:
-      "Discover layouts, responsive design, typography, colours, and modern styling.",
-    icon: "design",
-    featured: true,
-  },
-  {
-    id: 3,
-    title: "JavaScript Essentials",
-    slug: "javascript-essentials",
-    category: "Technology",
-    level: "Beginner",
-    duration: "8 weeks",
-    lessons: 20,
-    description:
-      "Explore programming fundamentals and add interactive behaviour to websites.",
-    icon: "code",
-    featured: false,
-  },
-  {
-    id: 4,
-    title: "Business Fundamentals",
-    slug: "business-fundamentals",
-    category: "Business",
-    level: "Beginner",
-    duration: "5 weeks",
-    lessons: 14,
-    description:
-      "Understand business planning, customers, operations, and decision-making.",
-    icon: "business",
-    featured: false,
-  },
-  {
-    id: 5,
-    title: "Mathematics Essentials",
-    slug: "mathematics-essentials",
-    category: "Science & Mathematics",
-    level: "Beginner",
-    duration: "6 weeks",
-    lessons: 18,
-    description:
-      "Strengthen your mathematical foundation through structured learning and practice.",
-    icon: "science",
-    featured: false,
-  },
-  {
-    id: 6,
-    title: "Creative Design Principles",
-    slug: "creative-design-principles",
-    category: "Creative Arts & Design",
-    level: "Beginner",
-    duration: "4 weeks",
-    lessons: 10,
-    description:
-      "Learn about visual balance, composition, colour, and creative problem-solving.",
-    icon: "design",
-    featured: false,
-  },
-];
+function getCourseArtClass(category) {
+  if (category === "Business") {
+    return "course-card-art-business";
+  }
 
-const categories = [
-  "All courses",
-  ...new Set(sampleCourses.map((course) => course.category)),
-];
+  if (category === "Science & Mathematics") {
+    return "course-card-art-science";
+  }
 
-function getCourseIcon(icon) {
-  if (icon === "design") return Layers3;
-  if (icon === "business") return GraduationCap;
-  if (icon === "science") return BookOpen;
-  return BookOpen;
+  if (category === "Creative Arts & Design") {
+    return "course-card-art-design";
+  }
+
+  return "course-card-art-code";
 }
 
 function Courses() {
-  const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All courses");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+
+  const categories = useMemo(
+    () => [
+      "All",
+      ...new Set(sampleCourses.map((course) => course.category)),
+    ],
+    []
+  );
 
   const filteredCourses = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const search = searchTerm.trim().toLowerCase();
 
     return sampleCourses.filter((course) => {
       const matchesCategory =
-        activeCategory === "All courses" ||
-        course.category === activeCategory;
+        selectedCategory === "All" ||
+        course.category === selectedCategory;
 
       const matchesSearch =
-        !query ||
-        course.title.toLowerCase().includes(query) ||
-        course.description.toLowerCase().includes(query) ||
-        course.category.toLowerCase().includes(query);
+        !search ||
+        course.title.toLowerCase().includes(search) ||
+        course.description.toLowerCase().includes(search) ||
+        course.category.toLowerCase().includes(search) ||
+        course.level.toLowerCase().includes(search);
 
       return matchesCategory && matchesSearch;
     });
-  }, [search, activeCategory]);
+  }, [searchTerm, selectedCategory]);
+
+  function clearFilters() {
+    setSearchTerm("");
+    setSelectedCategory("All");
+  }
 
   return (
     <div className="courses-page">
       <section className="courses-hero">
         <div className="courses-hero-content">
           <span className="courses-eyebrow">
-            DISCOVER YOUR NEXT OPPORTUNITY
+            EXPLORE OUR PROGRAMMES
           </span>
 
           <h1>
-            Learn something <span>meaningful.</span>
+            Find the right course for your <span>next chapter.</span>
           </h1>
 
           <p>
             Explore learning opportunities across technology, business,
-            mathematics, creative fields, and more. Find a subject that
-            matches your interests and goals.
+            mathematics, creative disciplines, and more as the academy grows.
           </p>
 
           <div className="courses-hero-stats">
             <div>
               <BookOpen size={19} />
-              <span>Structured learning</span>
+              <span>
+                {sampleCourses.length} learning programmes
+              </span>
             </div>
+
             <div>
-              <GraduationCap size={20} />
-              <span>Different skill levels</span>
+              <GraduationCap size={19} />
+              <span>Different subject areas</span>
             </div>
           </div>
+
+          <a
+            href="#course-catalogue"
+            className="courses-category-button active"
+          >
+            Explore courses
+            <ArrowRight size={17} />
+          </a>
         </div>
       </section>
 
-      <section className="courses-catalogue">
+      <section
+        className="courses-catalogue"
+        id="course-catalogue"
+      >
         <div className="courses-section-heading">
           <div>
-            <span className="courses-eyebrow">COURSE CATALOGUE</span>
-            <h2>Find your learning path</h2>
+            <span className="courses-eyebrow">
+              THE COURSE CATALOGUE
+            </span>
+
+            <h2>Explore available courses</h2>
+
             <p>
-              Search available courses or browse by subject area.
+              Search the catalogue or choose a subject area to get started.
             </p>
           </div>
 
-          <span className="courses-count">
+          <div className="courses-count">
             {filteredCourses.length}{" "}
             {filteredCourses.length === 1 ? "course" : "courses"}
-          </span>
+          </div>
         </div>
 
-        <div className="courses-search">
-          <Search size={20} />
+        <label className="courses-search">
+          <Search size={19} />
+
           <input
             type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search courses, subjects, or skills..."
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search by course, subject, or level..."
             aria-label="Search courses"
           />
-        </div>
 
-        <div className="courses-category-list" aria-label="Filter by category">
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => setSearchTerm("")}
+              aria-label="Clear search"
+            >
+              <X size={17} />
+            </button>
+          )}
+        </label>
+
+        <div className="courses-category-list">
           {categories.map((category) => (
             <button
-              key={category}
               type="button"
-              className={`courses-category-button ${
-                activeCategory === category ? "active" : ""
-              }`}
-              onClick={() => setActiveCategory(category)}
-              aria-pressed={activeCategory === category}
+              key={category}
+              className={
+                selectedCategory === category
+                  ? "courses-category-button active"
+                  : "courses-category-button"
+              }
+              onClick={() => setSelectedCategory(category)}
+              aria-pressed={selectedCategory === category}
             >
               {category}
             </button>
@@ -201,74 +169,66 @@ function Courses() {
 
         {filteredCourses.length > 0 ? (
           <div className="courses-grid">
-            {filteredCourses.map((course) => {
-              const CourseIcon = getCourseIcon(course.icon);
+            {filteredCourses.map((course) => (
+              <article className="course-card" key={course.id}>
+                <div
+                  className={`course-card-art ${getCourseArtClass(
+                    course.category
+                  )}`}
+                >
+                  <div className="course-card-art-icon">
+                    <BookOpen size={31} />
+                  </div>
 
-              return (
-                <article className="course-card" key={course.id}>
-                  <div
-                    className={`course-card-art course-card-art-${course.icon}`}
+                  <span className="course-category-label">
+                    {course.category}
+                  </span>
+                </div>
+
+                <div className="course-card-body">
+                  <div className="course-card-meta">
+                    <span>{course.level}</span>
+                    <span>{course.lessons} lessons</span>
+                  </div>
+
+                  <h3>{course.title}</h3>
+
+                  <p className="course-card-description">
+                    {course.description}
+                  </p>
+
+                  <div className="course-card-duration">
+                    <Clock size={16} />
+                    <span>{course.duration}</span>
+                  </div>
+
+                  <Link
+                    to={`/courses/${course.slug}`}
+                    className="course-card-link"
                   >
-                    <div className="course-card-art-icon">
-                      <CourseIcon size={30} />
-                    </div>
-
-                    {course.featured && (
-                      <span className="course-featured-label">
-                        Featured
-                      </span>
-                    )}
-
-                    <span className="course-category-label">
-                      {course.category}
-                    </span>
-                  </div>
-
-                  <div className="course-card-body">
-                    <div className="course-card-meta">
-                      <span>{course.level}</span>
-                      <span>{course.lessons} lessons</span>
-                    </div>
-
-                    <h3>{course.title}</h3>
-
-                    <p className="course-card-description">
-                      {course.description}
-                    </p>
-
-                    <div className="course-card-duration">
-                      <Clock size={16} />
-                      <span>{course.duration}</span>
-                    </div>
-
-                    <Link
-                      to={`/courses/${course.slug}`}
-                      className="course-card-link"
-                    >
-                      Explore course
-                      <ArrowRight size={17} />
-                    </Link>
-                  </div>
-                </article>
-              );
-            })}
+                    <span>View course details</span>
+                    <ArrowRight size={17} />
+                  </Link>
+                </div>
+              </article>
+            ))}
           </div>
         ) : (
           <div className="courses-empty-state">
             <div className="courses-empty-icon">
-              <Search size={26} />
+              <Search size={28} />
             </div>
+
             <h3>No courses found</h3>
+
             <p>
               Try another search term or choose a different category.
             </p>
+
             <button
               type="button"
               className="courses-reset-button"
-              onClick={() => {
-                setSearch("");
-                setActiveCategory("All courses");
-              }}
+              onClick={clearFilters}
             >
               Clear filters
             </button>
@@ -276,9 +236,8 @@ function Courses() {
         )}
 
         <p className="courses-preview-note">
-          These are sample courses for the frontend preview. Course content,
-          availability, and categories will be connected to the academy
-          backend later.
+          Course catalogue preview. Course enrolment, full lessons,
+          assessments, and certificates will be connected in later stages.
         </p>
       </section>
     </div>
