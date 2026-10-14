@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import learningCourses from "./learningData";
+import ProjectAssessment from "./ProjectAssessment";
 import "./LearningWorkspace.css";
 
 function LearningWorkspace() {
@@ -40,14 +41,18 @@ function LearningWorkspace() {
   }
 
   const allLessons = course.modules.flatMap((module) => module.lessons);
+
   const activeIndex = allLessons.findIndex(
     (lesson) => lesson.id === activeLessonId
   );
+
   const activeLesson = allLessons[activeIndex] || allLessons[0];
   const completedCount = completedLessons.length;
-  const progress = Math.round(
-    (completedCount / allLessons.length) * 100
-  );
+
+  const progress =
+    allLessons.length > 0
+      ? Math.round((completedCount / allLessons.length) * 100)
+      : 0;
 
   function toggleModule(moduleId) {
     setExpandedModules((current) =>
@@ -70,7 +75,22 @@ function LearningWorkspace() {
       return;
     }
 
-    setActiveLessonId(allLessons[index].id);
+    const nextLesson = allLessons[index];
+
+    setActiveLessonId(nextLesson.id);
+
+    const containingModule = course.modules.find((module) =>
+      module.lessons.some((lesson) => lesson.id === nextLesson.id)
+    );
+
+    if (containingModule) {
+      setExpandedModules((current) =>
+        current.includes(containingModule.id)
+          ? current
+          : [...current, containingModule.id]
+      );
+    }
+
     setSidebarOpen(false);
   }
 
@@ -110,6 +130,7 @@ function LearningWorkspace() {
 
         <aside
           className={`learning-sidebar${sidebarOpen ? " is-open" : ""}`}
+          aria-label="Course lessons"
         >
           <div className="learning-sidebar-heading">
             <div>
@@ -161,6 +182,7 @@ function LearningWorkspace() {
                       ) : (
                         <ChevronRight size={17} />
                       )}
+
                       <span>{module.title}</span>
                     </span>
                   </button>
@@ -171,6 +193,7 @@ function LearningWorkspace() {
                         const isComplete = completedLessons.includes(
                           lesson.id
                         );
+
                         const isActive = activeLesson.id === lesson.id;
 
                         return (
@@ -180,11 +203,14 @@ function LearningWorkspace() {
                             className={`learning-lesson-link${
                               isActive ? " active" : ""
                             }`}
-                            onClick={() => goToLesson(
-                              allLessons.findIndex(
-                                (item) => item.id === lesson.id
+                            onClick={() =>
+                              goToLesson(
+                                allLessons.findIndex(
+                                  (item) => item.id === lesson.id
+                                )
                               )
-                            )}
+                            }
+                            aria-current={isActive ? "step" : undefined}
                           >
                             {isComplete ? (
                               <CheckCircle2 size={17} />
@@ -210,17 +236,18 @@ function LearningWorkspace() {
 
         <section className="learning-main">
           <div className="learning-main-inner">
-            <div className="learning-breadcrumb">
+            <nav className="learning-breadcrumb" aria-label="Breadcrumb">
               <Link to="/courses">Courses</Link>
               <ChevronRight size={15} />
               <span>{course.category}</span>
-            </div>
+            </nav>
 
             <div className="learning-lesson-heading">
               <div>
                 <p className="learning-eyebrow">
                   LESSON {activeIndex + 1} OF {allLessons.length}
                 </p>
+
                 <h1>{activeLesson.title}</h1>
               </div>
 
@@ -230,13 +257,16 @@ function LearningWorkspace() {
               </span>
             </div>
 
-            <div className="learning-content-panel">
+            <article className="learning-content-panel">
               <div className="learning-content-placeholder">
                 <div className="learning-content-icon">
                   <BookOpen size={38} />
                 </div>
+
                 <p>LEARNING MATERIAL</p>
+
                 <h2>{activeLesson.title}</h2>
+
                 <span>
                   Video lessons and downloadable materials can be
                   integrated in a future step.
@@ -247,15 +277,16 @@ function LearningWorkspace() {
                 <h2>About This Lesson</h2>
                 <p>{activeLesson.content}</p>
               </div>
-            </div>
+            </article>
 
-            <div className="learning-completion-panel">
+            <section className="learning-completion-panel">
               <div>
                 <h3>
                   {completedLessons.includes(activeLesson.id)
                     ? "Lesson completed"
                     : "Finished this lesson?"}
                 </h3>
+
                 <p>
                   Mark this lesson complete to track your progress.
                 </p>
@@ -268,13 +299,17 @@ function LearningWorkspace() {
                 disabled={completedLessons.includes(activeLesson.id)}
               >
                 <CheckCircle2 size={18} />
+
                 {completedLessons.includes(activeLesson.id)
                   ? "Completed"
                   : "Mark Complete"}
               </button>
-            </div>
+            </section>
 
-            <div className="learning-lesson-navigation">
+            <nav
+              className="learning-lesson-navigation"
+              aria-label="Lesson navigation"
+            >
               <button
                 type="button"
                 className="learning-previous-button"
@@ -294,7 +329,11 @@ function LearningWorkspace() {
                 Next Lesson
                 <ArrowRight size={18} />
               </button>
-            </div>
+            </nav>
+
+            {course.project && (
+              <ProjectAssessment project={course.project} />
+            )}
           </div>
         </section>
       </div>

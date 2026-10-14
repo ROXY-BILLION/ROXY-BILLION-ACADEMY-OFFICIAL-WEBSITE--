@@ -3,7 +3,6 @@ import {
   CheckCircle2,
   ClipboardCheck,
   ExternalLink,
-  Github,
   Send,
   Target,
 } from "lucide-react";
@@ -87,6 +86,7 @@ function ProjectAssessment({ project }) {
         </div>
 
         <h3>{project.title}</h3>
+
         <p className="project-brief-description">
           {project.description}
         </p>
@@ -123,9 +123,11 @@ function ProjectAssessment({ project }) {
             <div
               style={{
                 width: `${
-                  (checkedRequirements.length /
-                    project.requirements.length) *
-                  100
+                  project.requirements.length > 0
+                    ? (checkedRequirements.length /
+                        project.requirements.length) *
+                      100
+                    : 0
                 }%`,
               }}
             />
@@ -177,13 +179,16 @@ function ProjectAssessment({ project }) {
 
             <div>
               <h4>Submission recorded in this session</h4>
+
               <p>
                 Your project details have been captured in the current
                 page session. They have not been sent to a server.
               </p>
+
               <p>
                 <strong>Project:</strong> {submission.projectTitle}
               </p>
+
               <p>
                 <strong>Recorded:</strong> {submission.submittedAt}
               </p>
@@ -193,9 +198,8 @@ function ProjectAssessment({ project }) {
                   <a
                     href={submission.repositoryUrl}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                   >
-                    <Github size={16} />
                     View Repository
                     <ExternalLink size={14} />
                   </a>
@@ -205,10 +209,10 @@ function ProjectAssessment({ project }) {
                   <a
                     href={submission.liveUrl}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                   >
-                    <ExternalLink size={16} />
                     View Live Project
+                    <ExternalLink size={14} />
                   </a>
                 )}
               </div>
@@ -229,6 +233,7 @@ function ProjectAssessment({ project }) {
           >
             <div className="project-form-field">
               <label htmlFor="project-title">Project title</label>
+
               <input
                 id="project-title"
                 type="text"
@@ -245,6 +250,7 @@ function ProjectAssessment({ project }) {
               <label htmlFor="repository-url">
                 GitHub repository URL
               </label>
+
               <input
                 id="repository-url"
                 type="url"
@@ -260,6 +266,7 @@ function ProjectAssessment({ project }) {
               <label htmlFor="live-project-url">
                 Live project URL
               </label>
+
               <input
                 id="live-project-url"
                 type="url"
@@ -273,6 +280,7 @@ function ProjectAssessment({ project }) {
               <label htmlFor="project-description">
                 What did you build?
               </label>
+
               <textarea
                 id="project-description"
                 value={description}
