@@ -3,243 +3,226 @@ import { Link } from "react-router-dom";
 import {
   BookOpen,
   Clock3,
-  Search,
-  PlayCircle,
   GraduationCap,
+  PlayCircle,
+  Search,
 } from "lucide-react";
-import StudentNavigation from "../../components/student/StudentNavigation";
+import StudentNavigation from "./StudentNavigation";
 import "./MyCourses.css";
 
-const enrolledCourses = [
+const myCourses = [
   {
     id: 1,
     title: "Web Development Fundamentals",
     category: "Technology",
-    description:
-      "Learn HTML, CSS, JavaScript, and the fundamentals of building websites.",
     progress: 65,
     completedLessons: 13,
     totalLessons: 20,
-    duration: "8 weeks",
-    level: "Beginner",
+    slug: "web-development-fundamentals",
     status: "In Progress",
     color: "blue",
-    slug: "web-development-fundamentals",
   },
   {
     id: 2,
     title: "Introduction to Business",
     category: "Business",
-    description:
-      "Explore business fundamentals, planning, management, and entrepreneurship.",
     progress: 30,
     completedLessons: 6,
     totalLessons: 20,
-    duration: "6 weeks",
-    level: "Beginner",
+    slug: "introduction-to-business",
     status: "In Progress",
     color: "gold",
-    slug: "introduction-to-business",
   },
   {
     id: 3,
     title: "Creative Design Essentials",
     category: "Creative Arts & Design",
-    description:
-      "Understand design principles, visual communication, and creative thinking.",
     progress: 10,
     completedLessons: 2,
     totalLessons: 20,
-    duration: "5 weeks",
-    level: "Beginner",
+    slug: "creative-design-essentials",
     status: "In Progress",
     color: "purple",
-    slug: "creative-design-essentials",
   },
 ];
 
+const courseFilters = [
+  "All Courses",
+  "In Progress",
+  "Completed",
+  "Not Started",
+];
+
 function MyCourses() {
-  const [activeFilter, setActiveFilter] = useState("All Courses");
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeFilter, setActiveFilter] = useState("All Courses");
 
-  const filters = [
-    "All Courses",
-    "In Progress",
-    "Completed",
-    "Not Started",
-  ];
+  const filteredCourses = myCourses.filter((course) => {
+    const matchesSearch =
+      course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course.category.toLowerCase().includes(searchTerm.toLowerCase());
 
-  const filteredCourses = enrolledCourses.filter((course) => {
     const matchesFilter =
       activeFilter === "All Courses" ||
-      course.status === activeFilter;
+      (activeFilter === "In Progress" &&
+        course.progress > 0 &&
+        course.progress < 100) ||
+      (activeFilter === "Completed" && course.progress === 100) ||
+      (activeFilter === "Not Started" && course.progress === 0);
 
-    const search = searchTerm.trim().toLowerCase();
-
-    const matchesSearch =
-      course.title.toLowerCase().includes(search) ||
-      course.category.toLowerCase().includes(search);
-
-    return matchesFilter && matchesSearch;
+    return matchesSearch && matchesFilter;
   });
 
-  const inProgressCount = enrolledCourses.filter(
-    (course) => course.status === "In Progress"
+  const completedCount = myCourses.filter(
+    (course) => course.progress === 100
   ).length;
 
-  const completedCount = enrolledCourses.filter(
-    (course) => course.status === "Completed"
+  const inProgressCount = myCourses.filter(
+    (course) => course.progress > 0 && course.progress < 100
   ).length;
+
+  const totalLessons = myCourses.reduce(
+    (total, course) => total + course.totalLessons,
+    0
+  );
+
+  const completedLessons = myCourses.reduce(
+    (total, course) => total + course.completedLessons,
+    0
+  );
 
   return (
-    <main className="my-courses-page">
+    <main className="my-courses-page page-container">
       <StudentNavigation />
 
-      <section className="my-courses-header">
-        <div>
-          <span className="my-courses-eyebrow">
-            YOUR LEARNING SPACE
-          </span>
-          <h1>My Courses</h1>
-          <p>
-            Keep learning, track your progress, and work toward your goals.
-          </p>
-        </div>
+      <header className="my-courses-header">
+        <p className="home-section-eyebrow">YOUR LEARNING SPACE</p>
+        <h1>My Courses</h1>
+        <p>
+          Manage your learning and pick up where you left off.
+        </p>
+      </header>
 
-        <Link to="/courses" className="browse-courses-button">
-          <BookOpen size={18} />
-          Browse Courses
-        </Link>
-      </section>
-
-      <section
-        className="my-courses-summary"
-        aria-label="Course summary"
-      >
-        <article className="course-summary-card">
-          <div className="summary-icon">
-            <BookOpen size={21} />
-          </div>
+      <section className="my-courses-stats">
+        <article className="my-courses-stat">
+          <BookOpen size={22} />
           <div>
-            <span>Enrolled Courses</span>
-            <strong>{enrolledCourses.length}</strong>
+            <p>Total Courses</p>
+            <h2>{myCourses.length}</h2>
           </div>
         </article>
 
-        <article className="course-summary-card">
-          <div className="summary-icon">
-            <PlayCircle size={21} />
-          </div>
+        <article className="my-courses-stat">
+          <PlayCircle size={22} />
           <div>
-            <span>In Progress</span>
-            <strong>{inProgressCount}</strong>
+            <p>In Progress</p>
+            <h2>{inProgressCount}</h2>
           </div>
         </article>
 
-        <article className="course-summary-card">
-          <div className="summary-icon">
-            <GraduationCap size={21} />
-          </div>
+        <article className="my-courses-stat">
+          <GraduationCap size={22} />
           <div>
-            <span>Completed</span>
-            <strong>{completedCount}</strong>
+            <p>Completed</p>
+            <h2>{completedCount}</h2>
+          </div>
+        </article>
+
+        <article className="my-courses-stat">
+          <Clock3 size={22} />
+          <div>
+            <p>Lessons Completed</p>
+            <h2>
+              {completedLessons}/{totalLessons}
+            </h2>
           </div>
         </article>
       </section>
 
-      <section className="my-courses-content">
+      <section className="my-courses-library">
         <div className="my-courses-toolbar">
-          <div className="course-filter-tabs" aria-label="Filter courses">
-            {filters.map((filter) => (
-              <button
-                key={filter}
-                type="button"
-                className={
-                  activeFilter === filter ? "active" : ""
-                }
-                aria-pressed={activeFilter === filter}
-                onClick={() => setActiveFilter(filter)}
-              >
-                {filter}
-              </button>
-            ))}
+          <div>
+            <h2>Your Course Library</h2>
+            <p>Find a course and continue your learning journey.</p>
           </div>
 
-          <label className="course-search">
+          <label className="my-courses-search">
             <Search size={18} aria-hidden="true" />
             <input
               type="search"
               placeholder="Search your courses..."
-              aria-label="Search your courses"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
+              aria-label="Search your courses"
             />
           </label>
+        </div>
+
+        <div className="my-courses-filters" aria-label="Filter courses">
+          {courseFilters.map((filter) => (
+            <button
+              key={filter}
+              type="button"
+              className={
+                activeFilter === filter
+                  ? "my-courses-filter active"
+                  : "my-courses-filter"
+              }
+              onClick={() => setActiveFilter(filter)}
+              aria-pressed={activeFilter === filter}
+            >
+              {filter}
+            </button>
+          ))}
         </div>
 
         {filteredCourses.length > 0 ? (
           <div className="my-courses-grid">
             {filteredCourses.map((course) => (
-              <article
-                className="enrolled-course-card"
-                key={course.id}
-              >
+              <article className="my-course-card" key={course.id}>
                 <div
-                  className={`enrolled-course-banner ${course.color}`}
+                  className={`my-course-card-icon ${course.color}`}
                 >
-                  <span>{course.category}</span>
-                  <BookOpen size={38} aria-hidden="true" />
+                  <BookOpen size={27} />
                 </div>
 
-                <div className="enrolled-course-body">
-                  <div className="enrolled-course-meta">
-                    <span>{course.level}</span>
-                    <span className="course-status">
-                      {course.status}
-                    </span>
-                  </div>
+                <div className="my-course-card-content">
+                  <p className="my-course-category">{course.category}</p>
+                  <h3>{course.title}</h3>
 
-                  <h2>{course.title}</h2>
+                  <span className="my-course-status">
+                    {course.progress === 100
+                      ? "Completed"
+                      : course.progress === 0
+                        ? "Not Started"
+                        : "In Progress"}
+                  </span>
 
-                  <p className="enrolled-course-description">
-                    {course.description}
-                  </p>
-
-                  <div className="course-progress-heading">
+                  <div className="my-course-progress-heading">
                     <span>Course progress</span>
                     <strong>{course.progress}%</strong>
                   </div>
 
-                  <div
-                    className="course-progress-track"
-                    role="progressbar"
-                    aria-label={`${course.title} progress`}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={course.progress}
-                  >
-                    <span
+                  <div className="my-course-progress-track">
+                    <div
+                      className="my-course-progress-fill"
                       style={{ width: `${course.progress}%` }}
                     />
                   </div>
 
-                  <div className="enrolled-course-details">
-                    <span>
-                      <BookOpen size={15} />
-                      {course.completedLessons}/{course.totalLessons} lessons
-                    </span>
-                    <span>
-                      <Clock3 size={15} />
-                      {course.duration}
-                    </span>
-                  </div>
+                  <p className="my-course-lessons">
+                    {course.completedLessons} of {course.totalLessons}{" "}
+                    lessons completed
+                  </p>
 
                   <Link
                     to={`/courses/${course.slug}`}
-                    className="continue-course-button"
+                    className="my-course-continue"
                   >
+                    {course.progress === 100
+                      ? "Review Course"
+                      : "Continue Learning"}
                     <PlayCircle size={18} />
-                    Continue Learning
                   </Link>
                 </div>
               </article>
@@ -247,16 +230,16 @@ function MyCourses() {
           </div>
         ) : (
           <div className="my-courses-empty">
-            <BookOpen size={42} aria-hidden="true" />
-            <h2>No courses found</h2>
+            <BookOpen size={32} />
+            <h3>No courses found</h3>
             <p>
-              Try another search or choose a different course filter.
+              Try a different search term or select another filter.
             </p>
             <button
               type="button"
               onClick={() => {
-                setActiveFilter("All Courses");
                 setSearchTerm("");
+                setActiveFilter("All Courses");
               }}
             >
               Clear Filters
