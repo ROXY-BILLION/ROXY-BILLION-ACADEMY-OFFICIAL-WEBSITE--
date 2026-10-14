@@ -1,4 +1,3 @@
-
 const learningCourses = [
   {
     slug: "web-development-fundamentals",
@@ -6,7 +5,6 @@ const learningCourses = [
     category: "Technology",
     description:
       "Learn the foundations of building websites with HTML, CSS, and JavaScript.",
-
     modules: [
       {
         id: 1,
@@ -56,7 +54,88 @@ const learningCourses = [
         ],
       },
     ],
-
+    quiz: {
+      title: "HTML Fundamentals Quiz",
+      description:
+        "Test your understanding of websites, HTML elements, and basic page structure.",
+      passMark: 70,
+      questions: [
+        {
+          id: 1,
+          question: "What is the primary purpose of HTML?",
+          options: [
+            "To manage databases",
+            "To structure content on webpages",
+            "To host websites on the internet",
+            "To edit images",
+          ],
+          correctAnswer: 1,
+          explanation:
+            "HTML stands for HyperText Markup Language. It defines the structure and meaning of webpage content.",
+        },
+        {
+          id: 2,
+          question: "Which technology is mainly used to style a webpage?",
+          options: ["HTML", "CSS", "MongoDB", "Node.js"],
+          correctAnswer: 1,
+          explanation:
+            "CSS controls the presentation of a webpage, including colors, spacing, typography, and layout.",
+        },
+        {
+          id: 3,
+          question: "Which HTML element creates the largest standard heading?",
+          options: ["<heading>", "<h6>", "<h1>", "<head>"],
+          correctAnswer: 2,
+          explanation:
+            "The h1 element represents the highest-level heading among the six standard HTML heading levels.",
+        },
+        {
+          id: 4,
+          question: "Which HTML element creates a hyperlink?",
+          options: ["<link>", "<a>", "<href>", "<url>"],
+          correctAnswer: 1,
+          explanation:
+            "The anchor element, written as <a>, creates hyperlinks. Its href attribute specifies the destination.",
+        },
+        {
+          id: 5,
+          question: "Which HTML element is used for a paragraph?",
+          options: ["<text>", "<paragraph>", "<p>", "<pg>"],
+          correctAnswer: 2,
+          explanation:
+            "The p element represents a paragraph of text.",
+        },
+        {
+          id: 6,
+          question: "What is the purpose of a web browser?",
+          options: [
+            "To display and run webpages",
+            "To replace HTML",
+            "To create database tables automatically",
+            "To write every website's code for you",
+          ],
+          correctAnswer: 0,
+          explanation:
+            "A browser requests website resources and interprets HTML, CSS, and JavaScript to display interactive webpages.",
+        },
+        {
+          id: 7,
+          question: "Which attribute specifies the destination of a link?",
+          options: ["src", "alt", "class", "href"],
+          correctAnswer: 3,
+          explanation:
+            "The href attribute supplies the destination URL or location for an anchor link.",
+        },
+        {
+          id: 8,
+          question: "Which HTML element is commonly used to display an image?",
+          options: ["<picture-file>", "<img>", "<image>", "<src>"],
+          correctAnswer: 1,
+          explanation:
+            "The img element embeds an image. The src attribute identifies the image file, and alt provides alternative text.",
+        },
+      ],
+    },
     project: {
       title: "Build Your First Personal Portfolio",
       difficulty: "Beginner",
