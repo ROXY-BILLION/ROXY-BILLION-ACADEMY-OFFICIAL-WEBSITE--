@@ -6,14 +6,15 @@ import Pricing from "../pages/public/Pricing";
 import Contact from "../pages/public/Contact";
 import Courses from "../pages/public/Courses";
 import CourseDetails from "../pages/public/CourseDetails";
-
+import Login from "../pages/auth/Login";
+import Register from "../pages/auth/Register";
 
 function AuthPlaceholder({ title }) {
   return (
     <section className="public-placeholder">
       <p className="home-section-eyebrow">ROXY BILLION ACADEMY</p>
       <h1>{title}</h1>
-      <p>Authentication screens will be developed in Part 5.</p>
+      <p>Authentication screens will be developed in Part 7.</p>
     </section>
   );
 }
@@ -41,10 +42,17 @@ function AppRoutes() {
         <Route path="courses/:slug" element={<CourseDetails />} />
         <Route path="pricing" element={<Pricing />} />
         <Route path="contact" element={<Contact />} />
-        <Route path="login" element={<AuthPlaceholder title="Welcome back" />} />
-        <Route path="register" element={<AuthPlaceholder title="Create your account" />} />
-        <Route path="forgot-password" element={<AuthPlaceholder title="Recover your account" />} />
-        <Route path="reset-password" element={<AuthPlaceholder title="Choose a new password" />} />
+
+        <Route path="login" element={<Login />} />
+        <Route path="register" element={<Register />} />
+        <Route
+          path="forgot-password"
+          element={<AuthPlaceholder title="Recover your account" />}
+        />
+        <Route
+          path="reset-password"
+          element={<AuthPlaceholder title="Choose a new password" />}
+        />
       </Route>
 
       <Route path="/404" element={<NotFound />} />
