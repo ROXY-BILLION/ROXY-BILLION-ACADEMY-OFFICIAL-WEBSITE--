@@ -1,0 +1,157 @@
+.admin-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 1100;
+  width: 260px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 26px 16px 18px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #0c1629;
+  border-right: 1px solid #1d2b40;
+  transition: transform 0.25s ease;
+}
+
+.admin-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 8px 28px;
+  color: #f8fafc;
+  text-decoration: none;
+}
+
+.admin-sidebar-logo {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid #c5a451;
+  border-radius: 12px;
+  background: #17243a;
+  color: #e4c46d;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.admin-sidebar-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.admin-sidebar-brand-text strong {
+  font-size: 13px;
+  letter-spacing: 1.1px;
+}
+
+.admin-sidebar-brand-text small {
+  color: #91a0b6;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+}
+
+.admin-sidebar-mobile-close {
+  display: none;
+  margin-left: auto;
+  color: #aab7ca;
+}
+
+.admin-sidebar-section-label {
+  margin: 8px 10px 12px;
+  color: #71819a;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.admin-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.admin-sidebar-link {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 0 13px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: #a8b5c9;
+  font-size: 13px;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.admin-sidebar-link:hover {
+  background: #142239;
+  color: #ffffff;
+}
+
+.admin-sidebar-link.active {
+  border-color: rgba(213, 177, 85, 0.18);
+  background: #1a2a42;
+  color: #e4c46d;
+}
+
+.admin-sidebar-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding: 22px 8px 4px;
+  border-top: 1px solid #1d2b40;
+}
+
+.admin-sidebar-status-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #43c98b;
+}
+
+.admin-sidebar-footer div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.admin-sidebar-footer strong {
+  color: #dce5f2;
+  font-size: 11px;
+}
+
+.admin-sidebar-footer small {
+  color: #8291a8;
+  font-size: 10px;
+}
+
+@media (max-width: 900px) {
+  .admin-sidebar {
+    transform: translateX(-100%);
+  }
+
+  .admin-sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  .admin-sidebar-mobile-close {
+    display: inline-flex;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-sidebar,
+  .admin-sidebar-link {
+    transition: none;
+  }
+}

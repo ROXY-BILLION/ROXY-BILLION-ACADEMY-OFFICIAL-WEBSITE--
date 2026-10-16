@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import LoadingIntro from "../components/common/LoadingIntro";
+import AdminSidebar from "../admin/components/AdminSidebar";
+import AdminTopbar from "../admin/components/AdminTopbar";
+import "./AdminLayout.css";
 
 function getAdminPageKey(pathname) {
   const path = pathname.replace(/\/+$/, "") || "/admin";
@@ -33,7 +36,13 @@ function AdminLayout() {
 
 function AdminLayoutContent({ pathname }) {
   const [introFinished, setIntroFinished] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const pageKey = getAdminPageKey(pathname);
+
+  const closeSidebar = () => {
+    setSidebarOpen(false);
+  };
 
   return (
     <div className="admin-layout">
@@ -44,14 +53,31 @@ function AdminLayoutContent({ pathname }) {
         />
       )}
 
-      <header className="admin-header">
-        <span className="admin-brand">Roxy Billion Academy</span>
-        <span className="admin-label">Administration</span>
-      </header>
+      {sidebarOpen && (
+        <button
+          type="button"
+          className="admin-layout-overlay"
+          aria-label="Close navigation"
+          onClick={closeSidebar}
+        />
+      )}
 
-      <main className="admin-main">
-        <Outlet />
-      </main>
+      <AdminSidebar
+        isOpen={sidebarOpen}
+        onNavigate={closeSidebar}
+      />
+
+      <div className="admin-layout-main">
+        <AdminTopbar
+          pathname={pathname}
+          sidebarOpen={sidebarOpen}
+          onMenuClick={() => setSidebarOpen((open) => !open)}
+        />
+
+        <main className="admin-layout-content">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

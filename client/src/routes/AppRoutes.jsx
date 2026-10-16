@@ -16,6 +16,10 @@ import LearningWorkspace from "../pages/student/LearningWorkspace";
 import Certificates from "../pages/student/Certificates";
 import FreeAIGuide from "../pages/student/FreeAIGuide";
 import StudentSettings from "../pages/student/StudentSettings";
+import AdminLogin from "../admin/pages/AdminLogin";
+import AdminLayout from "../layouts/AdminLayout";
+import AdminDashboard from "../admin/pages/AdminDashboard";
+import AdminCourses from "../admin/pages/AdminCourses";
 
 function NotFound() {
   return (
@@ -55,6 +59,15 @@ function AppRoutes() {
           element={<LearningWorkspace />}
         />
         <Route path="settings" element={<StudentSettings />} />
+      </Route>
+
+      
+      
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<AdminDashboard />} />
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="courses" element={<AdminCourses />} />
       </Route>
 
       <Route path="/404" element={<NotFound />} />

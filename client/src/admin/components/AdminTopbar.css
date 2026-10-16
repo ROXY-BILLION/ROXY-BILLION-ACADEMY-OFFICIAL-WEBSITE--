@@ -1,0 +1,114 @@
+
+.admin-topbar {
+  position: relative;
+  z-index: 1;
+  min-height: 88px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 28px;
+  border-bottom: 1px solid #1d2b40;
+  background: #0b1425;
+}
+
+.admin-topbar-heading {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.admin-topbar-eyebrow {
+  margin: 0 0 5px;
+  color: #c5a451;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.admin-topbar-heading h1 {
+  margin: 0;
+  color: #f1f5f9;
+  font-size: 21px;
+  font-weight: 650;
+}
+
+.admin-topbar-menu {
+  display: none;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #29384e;
+  border-radius: 9px;
+  background: #111f34;
+  color: #e2e8f0;
+  cursor: pointer;
+}
+
+.admin-topbar-search {
+  width: min(280px, 35%);
+  min-width: 0;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  border: 1px solid #26354b;
+  border-radius: 9px;
+  background: #101c30;
+  color: #8797ae;
+}
+
+.admin-topbar-search input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #f1f5f9;
+  font: inherit;
+  font-size: 12px;
+}
+
+.admin-topbar-search input::placeholder {
+  color: #71819a;
+}
+
+@media (max-width: 900px) {
+  .admin-topbar-menu {
+    display: inline-flex;
+  }
+
+  .admin-topbar {
+    padding: 16px 22px;
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-topbar {
+    min-height: 76px;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .admin-topbar-heading {
+    gap: 10px;
+  }
+
+  .admin-topbar-heading h1 {
+    font-size: 17px;
+  }
+
+  .admin-topbar-eyebrow {
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+
+  .admin-topbar-search {
+    display: none;
+  }
+}
