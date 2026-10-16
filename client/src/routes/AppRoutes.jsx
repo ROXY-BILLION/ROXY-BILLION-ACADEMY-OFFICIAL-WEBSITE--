@@ -20,6 +20,14 @@ import AdminLogin from "../admin/pages/AdminLogin";
 import AdminLayout from "../layouts/AdminLayout";
 import AdminDashboard from "../admin/pages/AdminDashboard";
 import AdminCourses from "../admin/pages/AdminCourses";
+import AdminCategories from "../admin/pages/AdminCategories";
+import AdminStudents from "../admin/pages/AdminStudents";
+import AdminEnrollments from "../admin/pages/AdminEnrollments";
+import AdminAIUsage from "../admin/pages/AdminAIUsage";
+import AdminMessages from "../admin/pages/AdminMessages";
+import AdminSettings from "../admin/pages/AdminSettings";
+
+
 
 function NotFound() {
   return (
@@ -68,6 +76,12 @@ function AppRoutes() {
         <Route index element={<AdminDashboard />} />
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="courses" element={<AdminCourses />} />
+        <Route path="categories" element={<AdminCategories />} />
+        <Route path="students" element={<AdminStudents />} />
+        <Route path="enrollments" element={<AdminEnrollments />} />
+        <Route path="ai-usage" element={<AdminAIUsage />} />
+        <Route path="messages" element={<AdminMessages />} />
+        <Route path="settings" element={<AdminSettings />} />
       </Route>
 
       <Route path="/404" element={<NotFound />} />
