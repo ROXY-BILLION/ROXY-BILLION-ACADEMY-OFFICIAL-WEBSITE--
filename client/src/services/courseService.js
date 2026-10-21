@@ -1,32 +1,34 @@
+const API_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api"
+).replace(/\/$/, "");
 
-const API_URL = import.meta.env.VITE_API_URL;
+async function getData(endpoint) {
+  const response = await fetch(`${API_URL}${endpoint}`);
+  const data = await response.json();
 
-export const getCourses = async () => {
-    const response = await fetch(`${API_URL}/courses`);
+  if (!response.ok || data.success === false) {
+    throw new Error(data.message || `Failed to load ${endpoint}.`);
+  }
 
-    const data = await response.json();
+  return data;
+}
 
-    if (!response.ok || !data.success) {
-        throw new Error(data.message || "Failed to load courses.");
-    }
+export async function getCourses() {
+  const data = await getData("/courses");
 
-    return data.courses;
-};
+  if (Array.isArray(data)) {
+    return data;
+  }
 
-export const createCourse = async (courseData) => {
-    const response = await fetch(`${API_URL}/courses`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(courseData),
-    });
+  return data.courses || data.data || [];
+}
 
-    const data = await response.json();
+export async function getCategories() {
+  const data = await getData("/categories");
 
-    if (!response.ok || !data.success) {
-        throw new Error(data.message || "Failed to create course.");
-    }
+  if (Array.isArray(data)) {
+    return data;
+  }
 
-    return data.course;
-};
+  return data.categories || data.data || [];
+}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -8,7 +8,10 @@ import {
   Search,
   X,
 } from "lucide-react";
-import sampleCourses from "../../data/sampleCourses";
+import {
+  getCourses,
+  getCategories,
+} from "../../services/courseService";
 import "./Courses.css";
 
 function getCourseArtClass(category) {
@@ -28,35 +31,114 @@ function getCourseArtClass(category) {
 }
 
 function Courses() {
+  const [courses, setCourses] = useState([]);
+  const [apiCategories, setApiCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const categories = useMemo(
-    () => [
-      "All",
-      ...new Set(sampleCourses.map((course) => course.category)),
-    ],
-    []
-  );
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCatalogue() {
+      setLoading(true);
+      setError("");
+
+      const [courseResult, categoryResult] = await Promise.allSettled([
+        getCourses(),
+        getCategories(),
+      ]);
+
+      if (!isMounted) return;
+
+      if (courseResult.status === "rejected") {
+        setError(
+          courseResult.reason?.message || "Unable to load courses."
+        );
+        setLoading(false);
+        return;
+      }
+
+      const courseData = courseResult.value;
+
+      const normalizedCourses = (
+        Array.isArray(courseData) ? courseData : []
+      )
+        .filter((course) => course.status === "published")
+        .map((course) => ({
+          ...course,
+          id: course._id || course.id,
+          description:
+            course.shortDescription || course.description || "",
+          level: course.level || "Beginner",
+          lessons: Array.isArray(course.lessons)
+            ? course.lessons.length
+            : typeof course.lessons === "number"
+              ? course.lessons
+              : null,
+          duration: course.duration || "Self-paced",
+        }));
+
+      setCourses(normalizedCourses);
+
+      if (categoryResult.status === "fulfilled") {
+        const categoryData = categoryResult.value;
+
+        const normalizedCategories = (
+          Array.isArray(categoryData) ? categoryData : []
+        )
+          .map((category) => {
+            if (typeof category === "string") {
+              return category;
+            }
+
+            return category.name || category.title || category.category;
+          })
+          .filter(Boolean);
+
+        setApiCategories([...new Set(normalizedCategories)]);
+      } else {
+        setApiCategories([]);
+      }
+
+      setLoading(false);
+    }
+
+    loadCatalogue();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const categories = useMemo(() => {
+    const availableCategories =
+      apiCategories.length > 0
+        ? apiCategories
+        : courses.map((course) => course.category).filter(Boolean);
+
+    return ["All", ...new Set(availableCategories)];
+  }, [apiCategories, courses]);
 
   const filteredCourses = useMemo(() => {
     const search = searchTerm.trim().toLowerCase();
 
-    return sampleCourses.filter((course) => {
+    return courses.filter((course) => {
       const matchesCategory =
         selectedCategory === "All" ||
         course.category === selectedCategory;
 
       const matchesSearch =
         !search ||
-        course.title.toLowerCase().includes(search) ||
-        course.description.toLowerCase().includes(search) ||
-        course.category.toLowerCase().includes(search) ||
-        course.level.toLowerCase().includes(search);
+        course.title?.toLowerCase().includes(search) ||
+        course.description?.toLowerCase().includes(search) ||
+        course.category?.toLowerCase().includes(search) ||
+        course.level?.toLowerCase().includes(search);
 
       return matchesCategory && matchesSearch;
     });
-  }, [searchTerm, selectedCategory]);
+  }, [courses, searchTerm, selectedCategory]);
 
   function clearFilters() {
     setSearchTerm("");
@@ -83,9 +165,7 @@ function Courses() {
           <div className="courses-hero-stats">
             <div>
               <BookOpen size={19} />
-              <span>
-                {sampleCourses.length} learning programmes
-              </span>
+              <span>{courses.length} learning programmes</span>
             </div>
 
             <div>
@@ -104,10 +184,7 @@ function Courses() {
         </div>
       </section>
 
-      <section
-        className="courses-catalogue"
-        id="course-catalogue"
-      >
+      <section className="courses-catalogue" id="course-catalogue">
         <div className="courses-section-heading">
           <div>
             <span className="courses-eyebrow">
@@ -122,8 +199,11 @@ function Courses() {
           </div>
 
           <div className="courses-count">
-            {filteredCourses.length}{" "}
-            {filteredCourses.length === 1 ? "course" : "courses"}
+            {loading
+              ? "Loading..."
+              : `${filteredCourses.length} ${
+                  filteredCourses.length === 1 ? "course" : "courses"
+                }`}
           </div>
         </div>
 
@@ -167,7 +247,25 @@ function Courses() {
           ))}
         </div>
 
-        {filteredCourses.length > 0 ? (
+        {loading ? (
+          <div className="courses-empty-state" role="status">
+            <h3>Loading courses...</h3>
+            <p>Please wait while we retrieve the course catalogue.</p>
+          </div>
+        ) : error ? (
+          <div className="courses-empty-state" role="alert">
+            <h3>Unable to load courses</h3>
+            <p>{error}</p>
+
+            <button
+              type="button"
+              className="courses-reset-button"
+              onClick={() => window.location.reload()}
+            >
+              Try again
+            </button>
+          </div>
+        ) : filteredCourses.length > 0 ? (
           <div className="courses-grid">
             {filteredCourses.map((course) => (
               <article className="course-card" key={course.id}>
@@ -188,7 +286,11 @@ function Courses() {
                 <div className="course-card-body">
                   <div className="course-card-meta">
                     <span>{course.level}</span>
-                    <span>{course.lessons} lessons</span>
+                    <span>
+                      {course.lessons === null
+                        ? "Course"
+                        : `${course.lessons} lessons`}
+                    </span>
                   </div>
 
                   <h3>{course.title}</h3>
@@ -219,19 +321,27 @@ function Courses() {
               <Search size={28} />
             </div>
 
-            <h3>No courses found</h3>
+            <h3>
+              {courses.length === 0
+                ? "No published courses yet"
+                : "No courses found"}
+            </h3>
 
             <p>
-              Try another search term or choose a different category.
+              {courses.length === 0
+                ? "Published courses will appear here when available."
+                : "Try another search term or choose a different category."}
             </p>
 
-            <button
-              type="button"
-              className="courses-reset-button"
-              onClick={clearFilters}
-            >
-              Clear filters
-            </button>
+            {courses.length > 0 && (
+              <button
+                type="button"
+                className="courses-reset-button"
+                onClick={clearFilters}
+              >
+                Clear filters
+              </button>
+            )}
           </div>
         )}
 
