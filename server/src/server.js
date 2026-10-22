@@ -6,6 +6,7 @@ import connectDB from "./config/db.js";
 import healthRoutes from "./routes/healthRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 import notFound from "./middleware/notFound.js";
 import errorHandler from "./middleware/errorHandler.js";
@@ -72,6 +73,7 @@ app.get("/", (req, res) => {
 app.use("/api/health", healthRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Future routes will be registered here:
 // app.use("/api/auth", authRoutes);
