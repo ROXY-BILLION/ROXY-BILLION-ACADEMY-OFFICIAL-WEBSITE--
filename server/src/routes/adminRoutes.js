@@ -1,8 +1,10 @@
-
 import { Router } from "express";
 import {
     protect,
     requireRole,
+    updateProfile,
+  changePassword,
+  deactivateAccount,
 } from "../middleware/authMiddleware.js";
 
 const router = Router();
@@ -24,5 +26,10 @@ router.get(
         });
     }
 );
+router.patch("/profile", protect, updateProfile);
+
+router.patch("/change-password", protect, changePassword);
+
+router.patch("/deactivate", protect, deactivateAccount);
 
 export default router;

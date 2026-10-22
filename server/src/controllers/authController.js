@@ -123,12 +123,9 @@ export const logout = (req, res) => {
 };
 
 
+
 export const updateProfile = async (req, res, next) => {
   try {
-    const { validateProfileUpdate } = await import(
-      "../validators/userValidators.js"
-    );
-
     const validation = validateProfileUpdate(req.body);
 
     if (!validation.valid) {
@@ -138,14 +135,14 @@ export const updateProfile = async (req, res, next) => {
       });
     }
 
-    const updates = validation.data;
+    const { name, avatar } = validation.data;
 
-    if (updates.name !== undefined) {
-      req.user.name = updates.name;
+    if (name !== undefined) {
+      req.user.name = name;
     }
 
-    if (updates.avatar !== undefined) {
-      req.user.avatar = updates.avatar;
+    if (avatar !== undefined) {
+      req.user.avatar = avatar;
     }
 
     await req.user.save();
@@ -159,5 +156,98 @@ export const updateProfile = async (req, res, next) => {
     next(error);
   }
 };
+
+export const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (
+      typeof currentPassword !== "string" ||
+      !currentPassword ||
+      typeof newPassword !== "string" ||
+      newPassword.length < 8 ||
+      newPassword.length > 72
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Provide your current password and a new password between 8 and 72 characters.",
+      });
+    }
+
+    const user = await User.findById(req.user._id).select("+password");
+
+    if (!user || !user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: "Account is unavailable.",
+      });
+    }
+
+    const passwordMatches = await user.comparePassword(currentPassword);
+
+    if (!passwordMatches) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password is incorrect.",
+      });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password changed successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+export const deactivateAccount = async (req, res, next) => {
+  try {
+    const { password } = req.body;
+
+    if (typeof password !== "string" || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Your password is required to deactivate your account.",
+      });
+    }
+
+    const user = await User.findById(req.user._id).select("+password");
+
+    if (!user || !user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: "Account is unavailable.",
+      });
+    }
+
+    const passwordMatches = await user.comparePassword(password);
+
+    if (!passwordMatches) {
+      return res.status(400).json({
+        success: false,
+        message: "Password is incorrect.",
+      });
+    }
+
+    user.isActive = false;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Account deactivated successfully. You will no longer be able to access it.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 
