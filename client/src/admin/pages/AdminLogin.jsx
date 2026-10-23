@@ -1,22 +1,71 @@
-
 import { useState } from "react";
-import { Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
-import { Link } from "react-router-dom";
+import {
+  Eye,
+  EyeOff,
+  LockKeyhole,
+  Mail,
+  ShieldCheck,
+} from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth.js";
 import "./AdminLogin.css";
 
 function AdminLogin() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
+    if (isSubmitting) return;
+
+    setError("");
+
     if (!email.trim() || !password) {
+      setError("Please enter your email address and password.");
       return;
     }
 
-    alert("Login form created. Backend authentication is not connected yet.");
+    setIsSubmitting(true);
+
+    try {
+      const data = await login({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+
+      if (data.user?.role !== "admin") {
+        await fetch(
+          `${(
+            import.meta.env.VITE_API_URL ||
+            "http://localhost:5000/api"
+          ).replace(/\/+$/, "")}/auth/logout`,
+          {
+            method: "POST",
+            credentials: "include",
+          }
+        ).catch(() => {});
+
+        throw new Error(
+          "This account does not have administrator access."
+        );
+      }
+
+      navigate("/admin/dashboard", { replace: true });
+    } catch (loginError) {
+      setError(
+        loginError.message ||
+          "Unable to sign in. Please check your credentials."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -41,7 +90,9 @@ function AdminLogin() {
           <ShieldCheck size={25} />
         </div>
 
-        <p className="admin-login-eyebrow">ADMINISTRATOR ACCESS</p>
+        <p className="admin-login-eyebrow">
+          ADMINISTRATOR ACCESS
+        </p>
 
         <h1>Welcome back</h1>
 
@@ -61,7 +112,10 @@ function AdminLogin() {
               placeholder="admin@example.com"
               autoComplete="username"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                setError("");
+              }}
               required
             />
           </div>
@@ -77,22 +131,45 @@ function AdminLogin() {
               placeholder="Enter your password"
               autoComplete="current-password"
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setError("");
+              }}
               required
             />
 
             <button
               className="admin-login-password-toggle"
               type="button"
-              onClick={() => setShowPassword((visible) => !visible)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
+              onClick={() =>
+                setShowPassword((visible) => !visible)
+              }
+              aria-label={
+                showPassword ? "Hide password" : "Show password"
+              }
             >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              {showPassword ? (
+                <EyeOff size={18} />
+              ) : (
+                <Eye size={18} />
+              )}
             </button>
           </div>
 
-          <button className="admin-login-submit" type="submit">
-            Sign in to dashboard
+          {error && (
+            <p className="admin-login-error" role="alert">
+              {error}
+            </p>
+          )}
+
+          <button
+            className="admin-login-submit"
+            type="submit"
+            disabled={isSubmitting}
+          >
+            {isSubmitting
+              ? "Signing in..."
+              : "Sign in to dashboard"}
           </button>
         </form>
 

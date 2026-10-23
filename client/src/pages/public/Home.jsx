@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -9,8 +10,6 @@ import {
   Laptop,
   BriefcaseBusiness,
   Globe,
-  HeartPulse,
-  Calculator,
   Palette,
   CheckCircle2,
   Sparkles,
@@ -19,40 +18,40 @@ import "./Home.css";
 
 const learningAreas = [
   {
-    icon: Laptop,
-    title: "Technology & Digital Skills",
+    icon: BookOpen,
+    title: "HTML",
     description:
-      "Explore software, digital tools, computing, and practical technology skills.",
-  },
-  {
-    icon: BriefcaseBusiness,
-    title: "Business & Entrepreneurship",
-    description:
-      "Develop business knowledge, leadership, communication, and entrepreneurial thinking.",
-  },
-  {
-    icon: Calculator,
-    title: "Science & Mathematics",
-    description:
-      "Strengthen analytical thinking, numerical skills, and scientific understanding.",
-  },
-  {
-    icon: Globe,
-    title: "Languages & Communication",
-    description:
-      "Build confidence in writing, speaking, language learning, and communication.",
+      "Learn the foundations of web development by creating and structuring web pages with HTML.",
   },
   {
     icon: Palette,
-    title: "Creative Arts & Design",
+    title: "HTML & CSS",
     description:
-      "Discover creative expression, visual design, and new ways to communicate ideas.",
+      "Build attractive web pages and learn how to style layouts, colours, typography, and responsive designs.",
   },
   {
-    icon: HeartPulse,
-    title: "Personal Development",
+    icon: Globe,
+    title: "HTML, CSS & JavaScript",
     description:
-      "Improve study habits, productivity, problem-solving, and lifelong learning.",
+      "Combine structure, styling, and JavaScript to build interactive and functional websites.",
+  },
+  {
+    icon: Laptop,
+    title: "Frontend Development",
+    description:
+      "Learn to build responsive user interfaces and create engaging experiences for website visitors.",
+  },
+  {
+    icon: BriefcaseBusiness,
+    title: "Backend Development",
+    description:
+      "Explore server-side programming, APIs, databases, and the logic that powers web applications.",
+  },
+  {
+    icon: GraduationCap,
+    title: "MERN Stack Development",
+    description:
+      "Learn full-stack web development with MongoDB, Express.js, React, and Node.js.",
   },
 ];
 
@@ -180,13 +179,14 @@ function Home() {
             <h2>
               One academy.
               <br />
-              <span>Many ways to grow.</span>
+              <span>Six paths to grow.</span>
             </h2>
           </div>
 
           <p className="home-section-description">
-            Learning is not limited to one subject. Find an area that interests
-            you, discover something new, and keep developing your potential.
+            Start with the foundations of website development, progress to
+            frontend and backend skills, and work towards building complete
+            full-stack applications.
           </p>
         </div>
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   Eye,
@@ -9,9 +9,14 @@ import {
   Mail,
   ShieldCheck,
 } from "lucide-react";
+
+import { useAuth } from "../../hooks/useAuth.js";
 import "./Login.css";
 
 function Login() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -20,7 +25,7 @@ function Login() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleChange(event) {
     const { name, value, checked, type } = event.target;
@@ -31,11 +36,11 @@ function Login() {
     }));
 
     setError("");
-    setMessage("");
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+    setError("");
 
     const email = formData.email.trim();
 
@@ -49,9 +54,21 @@ function Login() {
       return;
     }
 
-    setMessage(
-      "Your details passed the basic form checks. Account authentication will be connected in a later stage."
-    );
+    setIsSubmitting(true);
+
+    try {
+      await login({
+        email,
+        password: formData.password,
+        rememberMe: formData.rememberMe,
+      });
+
+      navigate("/dashboard", { replace: true });
+    } catch (error) {
+      setError(error.message || "Unable to sign in.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -80,7 +97,6 @@ function Login() {
               <span className="login-benefit-icon">
                 <GraduationCap size={20} />
               </span>
-
               <div>
                 <h3>Learn with purpose</h3>
                 <p>Explore courses across different subject areas.</p>
@@ -91,7 +107,6 @@ function Login() {
               <span className="login-benefit-icon">
                 <ShieldCheck size={20} />
               </span>
-
               <div>
                 <h3>Your learning space</h3>
                 <p>Prepare to manage your courses and progress.</p>
@@ -107,39 +122,25 @@ function Login() {
         <div className="login-form-side">
           <div className="login-card">
             <div className="login-card-heading">
-              <span className="login-eyebrow">
-                WELCOME BACK
-              </span>
-
+              <span className="login-eyebrow">WELCOME BACK</span>
               <h2>Sign in to your account</h2>
-
-              <p>
-                Enter your account details to continue.
-              </p>
+              <p>Enter your account details to continue.</p>
             </div>
 
             {error && (
-              <div className="login-feedback login-feedback-error" role="alert">
-                {error}
-              </div>
-            )}
-
-            {message && (
               <div
-                className="login-feedback login-feedback-success"
-                role="status"
+                className="login-feedback login-feedback-error"
+                role="alert"
               >
-                {message}
+                {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} noValidate>
               <div className="login-field">
                 <label htmlFor="login-email">Email address</label>
-
                 <div className="login-input-wrap">
                   <Mail size={18} />
-
                   <input
                     id="login-email"
                     name="email"
@@ -156,15 +157,11 @@ function Login() {
               <div className="login-field">
                 <div className="login-password-heading">
                   <label htmlFor="login-password">Password</label>
-
-                  <Link to="/forgot-password">
-                    Forgot password?
-                  </Link>
+                  <Link to="/forgot-password">Forgot password?</Link>
                 </div>
 
                 <div className="login-input-wrap">
                   <LockKeyhole size={18} />
-
                   <input
                     id="login-password"
                     name="password"
@@ -202,13 +199,16 @@ function Login() {
                   checked={formData.rememberMe}
                   onChange={handleChange}
                 />
-
                 <span>Remember me</span>
               </label>
 
-              <button type="submit" className="login-submit-button">
-                Sign in
-                <ArrowRight size={18} />
+              <button
+                type="submit"
+                className="login-submit-button"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Signing in..." : "Sign in"}
+                {!isSubmitting && <ArrowRight size={18} />}
               </button>
             </form>
 

@@ -8,10 +8,7 @@ import {
   Search,
   X,
 } from "lucide-react";
-import {
-  getCourses,
-  getCategories,
-} from "../../services/courseService";
+import { getCourses } from "../../services/courseService";
 import "./Courses.css";
 
 function getCourseArtClass(category) {
@@ -32,7 +29,6 @@ function getCourseArtClass(category) {
 
 function Courses() {
   const [courses, setCourses] = useState([]);
-  const [apiCategories, setApiCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -45,64 +41,41 @@ function Courses() {
       setLoading(true);
       setError("");
 
-      const [courseResult, categoryResult] = await Promise.allSettled([
-        getCourses(),
-        getCategories(),
-      ]);
+      try {
+        const courseData = await getCourses();
 
-      if (!isMounted) return;
+        if (!isMounted) return;
 
-      if (courseResult.status === "rejected") {
-        setError(
-          courseResult.reason?.message || "Unable to load courses."
-        );
-        setLoading(false);
-        return;
-      }
-
-      const courseData = courseResult.value;
-
-      const normalizedCourses = (
-        Array.isArray(courseData) ? courseData : []
-      )
-        .filter((course) => course.status === "published")
-        .map((course) => ({
-          ...course,
-          id: course._id || course.id,
-          description:
-            course.shortDescription || course.description || "",
-          level: course.level || "Beginner",
-          lessons: Array.isArray(course.lessons)
-            ? course.lessons.length
-            : typeof course.lessons === "number"
-              ? course.lessons
-              : null,
-          duration: course.duration || "Self-paced",
-        }));
-
-      setCourses(normalizedCourses);
-
-      if (categoryResult.status === "fulfilled") {
-        const categoryData = categoryResult.value;
-
-        const normalizedCategories = (
-          Array.isArray(categoryData) ? categoryData : []
+        const normalizedCourses = (
+          Array.isArray(courseData) ? courseData : []
         )
-          .map((category) => {
-            if (typeof category === "string") {
-              return category;
-            }
+          .filter((course) => course.status === "published")
+          .map((course) => ({
+            ...course,
+            id: course._id || course.id,
+            description:
+              course.shortDescription || course.description || "",
+            level: course.level || "Beginner",
+            lessons: Array.isArray(course.lessons)
+              ? course.lessons.length
+              : typeof course.lessons === "number"
+                ? course.lessons
+                : null,
+            duration: course.duration || "Self-paced",
+          }));
 
-            return category.name || category.title || category.category;
-          })
-          .filter(Boolean);
+        setCourses(normalizedCourses);
+      } catch (requestError) {
+        if (!isMounted) return;
 
-        setApiCategories([...new Set(normalizedCategories)]);
-      } else {
-        setApiCategories([]);
+        setError(
+          requestError?.message || "Unable to load courses."
+        );
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-
-      setLoading(false);
     }
 
     loadCatalogue();
@@ -113,13 +86,12 @@ function Courses() {
   }, []);
 
   const categories = useMemo(() => {
-    const availableCategories =
-      apiCategories.length > 0
-        ? apiCategories
-        : courses.map((course) => course.category).filter(Boolean);
+    const availableCategories = courses
+      .map((course) => course.category?.trim())
+      .filter(Boolean);
 
     return ["All", ...new Set(availableCategories)];
-  }, [apiCategories, courses]);
+  }, [courses]);
 
   const filteredCourses = useMemo(() => {
     const search = searchTerm.trim().toLowerCase();

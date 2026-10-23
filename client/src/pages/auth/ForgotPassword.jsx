@@ -8,31 +8,54 @@ import {
   Mail,
   ShieldCheck,
 } from "lucide-react";
+import { requestPasswordReset } from "../../services/auth";
 import "./ForgotPassword.css";
 
 function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+
+    if (isSubmitting) return;
+
     setError("");
     setMessage("");
 
-    if (!email.trim()) {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
       setError("Please enter your email address.");
       return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
+    ) {
       setError("Please enter a valid email address.");
       return;
     }
 
-    setMessage(
-      "Your email passed validation. Password-reset email delivery will be connected in a later stage."
-    );
+    setIsSubmitting(true);
+
+    try {
+      const data = await requestPasswordReset(normalizedEmail);
+
+      setMessage(
+        data.message ||
+          "If an account exists for that email, password reset instructions will be sent."
+      );
+    } catch (requestError) {
+      setError(
+        requestError.message ||
+          "We could not process your request. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -51,7 +74,9 @@ function ForgotPassword() {
           </Link>
 
           <div className="forgot-showcase-content">
-            <span className="forgot-eyebrow">ACCOUNT RECOVERY</span>
+            <span className="forgot-eyebrow">
+              ACCOUNT RECOVERY
+            </span>
 
             <h1>
               Let's get you
@@ -71,14 +96,16 @@ function ForgotPassword() {
               <div>
                 <strong>Account protection</strong>
                 <p>
-                  Password recovery will use a secure verification
-                  process when backend authentication is implemented.
+                  Password recovery uses a time-limited verification
+                  link to help protect your account.
                 </p>
               </div>
             </div>
           </div>
 
-          <p className="forgot-showcase-footer">Learn. Build. Grow.</p>
+          <p className="forgot-showcase-footer">
+            Learn. Build. Grow.
+          </p>
         </section>
 
         <section className="forgot-form-section">
@@ -87,7 +114,9 @@ function ForgotPassword() {
               <GraduationCap size={27} />
             </span>
 
-            <p className="forgot-eyebrow">NEED HELP SIGNING IN?</p>
+            <p className="forgot-eyebrow">
+              NEED HELP SIGNING IN?
+            </p>
 
             <h2>Forgot your password?</h2>
 
@@ -100,7 +129,7 @@ function ForgotPassword() {
               <div className="forgot-result" role="status">
                 <CheckCircle2 size={27} />
 
-                <h3>Request validated</h3>
+                <h3>Check your email</h3>
 
                 <p>{message}</p>
 
@@ -110,6 +139,7 @@ function ForgotPassword() {
                   onClick={() => {
                     setEmail("");
                     setMessage("");
+                    setError("");
                   }}
                 >
                   Try another email
@@ -118,7 +148,9 @@ function ForgotPassword() {
             ) : (
               <form className="forgot-form" onSubmit={handleSubmit}>
                 <div className="forgot-field">
-                  <label htmlFor="forgot-email">Email address</label>
+                  <label htmlFor="forgot-email">
+                    Email address
+                  </label>
 
                   <div className="forgot-input-wrap">
                     <Mail size={18} />
@@ -134,6 +166,7 @@ function ForgotPassword() {
                         setError("");
                       }}
                       autoComplete="email"
+                      maxLength={254}
                       required
                     />
                   </div>
@@ -145,9 +178,13 @@ function ForgotPassword() {
                   </p>
                 )}
 
-                <button type="submit" className="forgot-submit">
-                  Continue
-                  <ArrowRight size={18} />
+                <button
+                  type="submit"
+                  className="forgot-submit"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Sending request..." : "Continue"}
+                  {!isSubmitting && <ArrowRight size={18} />}
                 </button>
               </form>
             )}

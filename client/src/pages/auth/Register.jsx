@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   Eye,
@@ -11,9 +10,14 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
+
+import { useAuth } from "../../hooks/useAuth.js";
 import "./Register.css";
 
 function Register() {
+  const navigate = useNavigate();
+  const { register } = useAuth();
+
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -26,6 +30,7 @@ function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleChange(event) {
     const { name, value, type, checked } = event.target;
@@ -39,7 +44,7 @@ function Register() {
     setMessage("");
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     setError("");
     setMessage("");
@@ -52,9 +57,12 @@ function Register() {
       agreeToTerms,
     } = formData;
 
+    const trimmedName = fullName.trim();
+    const trimmedEmail = email.trim();
+
     if (
-      !fullName.trim() ||
-      !email.trim() ||
+      !trimmedName ||
+      !trimmedEmail ||
       !password ||
       !confirmPassword
     ) {
@@ -62,13 +70,18 @@ function Register() {
       return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (trimmedName.length < 2 || trimmedName.length > 80) {
+      setError("Your name must contain 2–80 characters.");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
       setError("Please enter a valid email address.");
       return;
     }
 
-    if (password.length < 8) {
-      setError("Your password must contain at least 8 characters.");
+    if (password.length < 8 || password.length > 72) {
+      setError("Your password must contain 8–72 characters.");
       return;
     }
 
@@ -82,9 +95,23 @@ function Register() {
       return;
     }
 
-    setMessage(
-      "Your form passed validation. Account creation will be connected in a later stage."
-    );
+    setIsSubmitting(true);
+
+    try {
+      await register({
+        name: trimmedName,
+        email: trimmedEmail,
+        password,
+      });
+
+      setMessage("Your account was created successfully.");
+
+      navigate("/dashboard", { replace: true });
+    } catch (error) {
+      setError(error.message || "Unable to create your account.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -122,9 +149,12 @@ function Register() {
               <span className="register-benefit-icon">
                 <GraduationCap size={21} />
               </span>
+
               <div>
                 <strong>Learn at your pace</strong>
-                <p>Explore learning opportunities that fit your goals.</p>
+                <p>
+                  Explore learning opportunities that fit your goals.
+                </p>
               </div>
             </div>
 
@@ -132,9 +162,12 @@ function Register() {
               <span className="register-benefit-icon">
                 <ShieldCheck size={21} />
               </span>
+
               <div>
                 <strong>Your learning journey</strong>
-                <p>Keep your courses and progress organized.</p>
+                <p>
+                  Keep your courses and progress organized.
+                </p>
               </div>
             </div>
           </div>
@@ -222,13 +255,16 @@ function Register() {
                     onChange={handleChange}
                     autoComplete="new-password"
                     minLength={8}
+                    maxLength={72}
                     required
                   />
 
                   <button
                     className="register-password-toggle"
                     type="button"
-                    onClick={() => setShowPassword((previous) => !previous)}
+                    onClick={() =>
+                      setShowPassword((previous) => !previous)
+                    }
                     aria-label={
                       showPassword ? "Hide password" : "Show password"
                     }
@@ -253,11 +289,14 @@ function Register() {
                   <input
                     id="register-confirmPassword"
                     name="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
+                    type={
+                      showConfirmPassword ? "text" : "password"
+                    }
                     placeholder="Enter your password again"
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     autoComplete="new-password"
+                    maxLength={72}
                     required
                   />
 
@@ -265,7 +304,9 @@ function Register() {
                     className="register-password-toggle"
                     type="button"
                     onClick={() =>
-                      setShowConfirmPassword((previous) => !previous)
+                      setShowConfirmPassword(
+                        (previous) => !previous
+                      )
                     }
                     aria-label={
                       showConfirmPassword
@@ -297,7 +338,10 @@ function Register() {
               </label>
 
               {error && (
-                <p className="register-feedback register-error" role="alert">
+                <p
+                  className="register-feedback register-error"
+                  role="alert"
+                >
                   {error}
                 </p>
               )}
@@ -311,9 +355,14 @@ function Register() {
                 </p>
               )}
 
-              <button className="register-submit" type="submit">
-                Create account
-                <ArrowRight size={18} />
+              <button
+                className="register-submit"
+                type="submit"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Creating account..." : "Create account"}
+
+                {!isSubmitting && <ArrowRight size={18} />}
               </button>
             </form>
 

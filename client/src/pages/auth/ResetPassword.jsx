@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -10,9 +9,13 @@ import {
   LockKeyhole,
   ShieldCheck,
 } from "lucide-react";
+import { submitPasswordReset } from "../../services/auth";
 import "./ResetPassword.css";
 
 function ResetPassword() {
+  const { token } = useParams();
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     password: "",
     confirmPassword: "",
@@ -22,6 +25,7 @@ function ResetPassword() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -34,27 +38,50 @@ function ResetPassword() {
     setError("");
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-    setError("");
-    setSuccess(false);
 
-    if (!formData.password || !formData.confirmPassword) {
+    if (isSubmitting) return;
+
+    setError("");
+
+    if (!token) {
+      setError(
+        "The reset link is missing its token. Request a new password reset link."
+      );
+      return;
+    }
+
+    const { password, confirmPassword } = formData;
+
+    if (!password || !confirmPassword) {
       setError("Please complete both password fields.");
       return;
     }
 
-    if (formData.password.length < 8) {
-      setError("Your password must contain at least 8 characters.");
+    if (password.length < 8 || password.length > 72) {
+      setError("Your password must contain 8–72 characters.");
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (password !== confirmPassword) {
       setError("Your passwords do not match.");
       return;
     }
 
-    setSuccess(true);
+    setIsSubmitting(true);
+
+    try {
+      await submitPasswordReset(token, password);
+      setSuccess(true);
+    } catch (requestError) {
+      setError(
+        requestError.message ||
+          "Unable to reset your password. Request a new reset link if it has expired."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -73,7 +100,9 @@ function ResetPassword() {
           </Link>
 
           <div className="reset-showcase-content">
-            <span className="reset-eyebrow">ACCOUNT SECURITY</span>
+            <span className="reset-eyebrow">
+              ACCOUNT SECURITY
+            </span>
 
             <h1>
               A fresh start
@@ -87,6 +116,7 @@ function ResetPassword() {
 
             <div className="reset-security-item">
               <ShieldCheck size={22} />
+
               <div>
                 <strong>Protect your account</strong>
                 <p>
@@ -97,7 +127,9 @@ function ResetPassword() {
             </div>
           </div>
 
-          <p className="reset-showcase-footer">Learn. Build. Grow.</p>
+          <p className="reset-showcase-footer">
+            Learn. Build. Grow.
+          </p>
         </section>
 
         <section className="reset-form-section">
@@ -106,7 +138,9 @@ function ResetPassword() {
               <GraduationCap size={27} />
             </span>
 
-            <p className="reset-eyebrow">PASSWORD RECOVERY</p>
+            <p className="reset-eyebrow">
+              PASSWORD RECOVERY
+            </p>
 
             <h2>Choose a new password</h2>
 
@@ -118,22 +152,29 @@ function ResetPassword() {
               <div className="reset-success" role="status">
                 <CheckCircle2 size={30} />
 
-                <h3>Form validated</h3>
+                <h3>Password reset successful</h3>
 
                 <p>
-                  Your new password passed the frontend checks.
-                  The actual password update requires a valid reset
-                  token and backend authentication.
+                  Your password has been updated. You can now sign in
+                  using your new password.
                 </p>
 
-                <Link to="/login" className="reset-submit">
+                <button
+                  type="button"
+                  className="reset-submit"
+                  onClick={() =>
+                    navigate("/login", { replace: true })
+                  }
+                >
                   Return to sign in
-                </Link>
+                </button>
               </div>
             ) : (
               <form className="reset-form" onSubmit={handleSubmit}>
                 <div className="reset-field">
-                  <label htmlFor="reset-password">New password</label>
+                  <label htmlFor="reset-password">
+                    New password
+                  </label>
 
                   <div className="reset-input-wrap">
                     <LockKeyhole size={18} />
@@ -147,6 +188,7 @@ function ResetPassword() {
                       onChange={handleChange}
                       autoComplete="new-password"
                       minLength={8}
+                      maxLength={72}
                       required
                     />
 
@@ -169,7 +211,7 @@ function ResetPassword() {
                   </div>
 
                   <p className="reset-field-hint">
-                    Use at least 8 characters.
+                    Use 8–72 characters.
                   </p>
                 </div>
 
@@ -184,11 +226,15 @@ function ResetPassword() {
                     <input
                       id="reset-confirm-password"
                       name="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
+                      type={
+                        showConfirmPassword ? "text" : "password"
+                      }
                       placeholder="Enter your new password again"
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       autoComplete="new-password"
+                      minLength={8}
+                      maxLength={72}
                       required
                     />
 
@@ -219,13 +265,22 @@ function ResetPassword() {
                   </p>
                 )}
 
-                <button type="submit" className="reset-submit">
-                  Validate new password
+                <button
+                  type="submit"
+                  className="reset-submit"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting
+                    ? "Updating password..."
+                    : "Reset password"}
                 </button>
               </form>
             )}
 
-            <Link to="/forgot-password" className="reset-back-link">
+            <Link
+              to="/forgot-password"
+              className="reset-back-link"
+            >
               <ArrowLeft size={16} />
               Back to password recovery
             </Link>

@@ -10,19 +10,16 @@ import {
   CheckCircle2,
   Settings,
 } from "lucide-react";
+import { useAuth } from "../../hooks/useAuth.js";
 import StudentNavigation from "./StudentNavigation";
+import {
+  changeUserPassword,
+  updateUserProfile,
+} from "../../services/auth.js";
 import "./StudentSettings.css";
 
 const PROFILE_KEY = "rba_student_profile";
 const PREFERENCES_KEY = "rba_student_preferences";
-
-const defaultProfile = {
-  fullName: "",
-  email: "",
-  phone: "",
-  country: "Nigeria",
-  bio: "",
-};
 
 const defaultPreferences = {
   emailUpdates: true,
@@ -34,16 +31,77 @@ const defaultPreferences = {
 function readStoredValue(key, fallback) {
   try {
     const stored = localStorage.getItem(key);
-    return stored ? { ...fallback, ...JSON.parse(stored) } : fallback;
+
+    if (!stored) return { ...fallback };
+
+    const parsed = JSON.parse(stored);
+
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return { ...fallback };
+    }
+
+    return { ...fallback, ...parsed };
   } catch {
-    return fallback;
+    return { ...fallback };
+  }
+}
+
+function readStoredProfile() {
+  try {
+    const stored = localStorage.getItem(PROFILE_KEY);
+
+    if (!stored) return {};
+
+    const parsed = JSON.parse(stored);
+
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed
+      : {};
+  } catch {
+    return {};
   }
 }
 
 function StudentSettings() {
-  const [profile, setProfile] = useState(() =>
-    readStoredValue(PROFILE_KEY, defaultProfile)
+  const { user, loading, refreshUser } = useAuth();
+
+  if (loading) {
+    return (
+      <main className="student-settings-page page-container">
+        <p>Loading your account settings...</p>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className="student-settings-page page-container">
+        <p>Please log in to manage your account settings.</p>
+      </main>
+    );
+  }
+
+  return (
+    <StudentSettingsContent
+      key={user._id || user.id || user.email}
+      user={user}
+      refreshUser={refreshUser}
+    />
   );
+}
+
+function StudentSettingsContent({ user, refreshUser }) {
+  const [profile, setProfile] = useState(() => {
+    const stored = readStoredProfile();
+
+    return {
+      fullName: user.name || user.fullName || stored.fullName || "",
+      email: user.email || "",
+      phone: stored.phone || "",
+      country: stored.country || "Nigeria",
+      bio: stored.bio || "",
+    };
+  });
 
   const [preferences, setPreferences] = useState(() =>
     readStoredValue(PREFERENCES_KEY, defaultPreferences)
@@ -58,6 +116,9 @@ function StudentSettings() {
   const [showPasswords, setShowPasswords] = useState(false);
   const [activeSection, setActiveSection] = useState("profile");
   const [notice, setNotice] = useState(null);
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [preferencesSaving, setPreferencesSaving] = useState(false);
 
   function updateProfile(event) {
     const { name, value } = event.target;
@@ -79,25 +140,83 @@ function StudentSettings() {
     setNotice(null);
   }
 
-  function saveProfile(event) {
+  async function saveProfile(event) {
     event.preventDefault();
 
-    try {
-      localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    if (profileSaving) return;
 
-      setNotice({
-        type: "success",
-        text: "Your profile has been saved in this browser.",
-      });
-    } catch {
+    const fullName = profile.fullName.trim();
+
+    if (fullName.length < 2 || fullName.length > 80) {
       setNotice({
         type: "error",
-        text: "Your profile could not be saved in this browser.",
+        text: "Your name must contain between 2 and 80 characters.",
       });
+      return;
+    }
+
+    setProfileSaving(true);
+    setNotice(null);
+
+    try {
+      await updateUserProfile({ name: fullName });
+
+      let localDetailsSaved = false;
+
+      try {
+        localStorage.setItem(
+          PROFILE_KEY,
+          JSON.stringify({
+            fullName,
+            email: user.email || "",
+            phone: profile.phone.trim(),
+            country: profile.country.trim(),
+            bio: profile.bio.trim(),
+          })
+        );
+
+        localDetailsSaved = true;
+      } catch {
+        // Optional details cannot be persisted if local storage fails.
+      }
+
+      setProfile((current) => ({
+        ...current,
+        fullName,
+        email: user.email || "",
+        phone: current.phone.trim(),
+        country: current.country.trim(),
+        bio: current.bio.trim(),
+      }));
+
+      try {
+        await refreshUser();
+      } catch {
+        // The account update may already have succeeded.
+      }
+
+      setNotice({
+        type: localDetailsSaved ? "success" : "error",
+        text: localDetailsSaved
+          ? "Your account name has been updated. Phone, country, and bio are saved in this browser only."
+          : "Your account name was updated, but the optional profile details could not be saved locally.",
+      });
+    } catch (error) {
+      setNotice({
+        type: "error",
+        text: error.message || "Unable to update your account name.",
+      });
+    } finally {
+      setProfileSaving(false);
     }
   }
 
   function savePreferences() {
+    if (preferencesSaving) return;
+
+    setPreferencesSaving(true);
+    setNotice(null);
+
     try {
       localStorage.setItem(
         PREFERENCES_KEY,
@@ -106,18 +225,22 @@ function StudentSettings() {
 
       setNotice({
         type: "success",
-        text: "Your preferences have been saved in this browser.",
+        text: "Your notification preferences have been saved in this browser. They are not synchronized with the academy server.",
       });
     } catch {
       setNotice({
         type: "error",
-        text: "Your preferences could not be saved.",
+        text: "Your preferences could not be saved in this browser.",
       });
+    } finally {
+      setPreferencesSaving(false);
     }
   }
 
-  function changePassword(event) {
+  async function changePassword(event) {
     event.preventDefault();
+
+    if (passwordSaving) return;
 
     if (!passwords.current || !passwords.next || !passwords.confirm) {
       setNotice({
@@ -127,10 +250,10 @@ function StudentSettings() {
       return;
     }
 
-    if (passwords.next.length < 8) {
+    if (passwords.next.length < 8 || passwords.next.length > 72) {
       setNotice({
         type: "error",
-        text: "Your new password must contain at least 8 characters.",
+        text: "Your new password must contain between 8 and 72 characters.",
       });
       return;
     }
@@ -143,11 +266,43 @@ function StudentSettings() {
       return;
     }
 
-    setNotice({
-      type: "info",
-      text:
-        "Password changes are not connected yet. A secure backend must verify your current password and update your account.",
-    });
+    if (passwords.current === passwords.next) {
+      setNotice({
+        type: "error",
+        text: "Choose a new password different from your current password.",
+      });
+      return;
+    }
+
+    setPasswordSaving(true);
+    setNotice(null);
+
+    try {
+      const result = await changeUserPassword({
+        currentPassword: passwords.current,
+        newPassword: passwords.next,
+      });
+
+      setPasswords({
+        current: "",
+        next: "",
+        confirm: "",
+      });
+
+      setNotice({
+        type: "success",
+        text: result.message || "Your password has been changed successfully.",
+      });
+    } catch (error) {
+      setNotice({
+        type: "error",
+        text:
+          error.message ||
+          "Unable to change your password. Please try again.",
+      });
+    } finally {
+      setPasswordSaving(false);
+    }
   }
 
   const sections = [
@@ -200,7 +355,9 @@ function StudentSettings() {
           ) : (
             <ShieldCheck size={19} />
           )}
+
           <span>{notice.text}</span>
+
           <button
             type="button"
             onClick={() => setNotice(null)}
@@ -215,14 +372,14 @@ function StudentSettings() {
         <aside className="student-settings-sidebar">
           <div className="student-settings-account-card">
             <div className="student-settings-avatar">
-              {profile.fullName.trim()
-                ? profile.fullName.trim().charAt(0).toUpperCase()
-                : "S"}
+              {(profile.fullName.trim() || "S")
+                .charAt(0)
+                .toUpperCase()}
             </div>
 
             <h2>{profile.fullName.trim() || "Student Account"}</h2>
 
-            <p>{profile.email || "Add your email address"}</p>
+            <p>{profile.email || "No account email available"}</p>
 
             <span className="student-settings-account-badge">
               <ShieldCheck size={14} />
@@ -241,9 +398,7 @@ function StudentSettings() {
                 <button
                   type="button"
                   key={section.id}
-                  className={
-                    activeSection === section.id ? "active" : ""
-                  }
+                  className={activeSection === section.id ? "active" : ""}
                   onClick={() => {
                     setActiveSection(section.id);
                     setNotice(null);
@@ -269,13 +424,11 @@ function StudentSettings() {
             <article className="student-settings-panel">
               <div className="student-settings-panel-heading">
                 <div>
-                  <p className="home-section-eyebrow">
-                    PERSONAL DETAILS
-                  </p>
+                  <p className="home-section-eyebrow">PERSONAL DETAILS</p>
                   <h2>Personal Information</h2>
                   <p>
-                    Update the information associated with your
-                    student profile.
+                    Update the information associated with your student
+                    profile.
                   </p>
                 </div>
 
@@ -287,9 +440,7 @@ function StudentSettings() {
                 onSubmit={saveProfile}
               >
                 <div className="student-settings-field">
-                  <label htmlFor="student-full-name">
-                    Full name
-                  </label>
+                  <label htmlFor="student-full-name">Full name</label>
                   <input
                     id="student-full-name"
                     name="fullName"
@@ -298,26 +449,26 @@ function StudentSettings() {
                     value={profile.fullName}
                     onChange={updateProfile}
                     placeholder="Enter your full name"
-                    maxLength={100}
+                    minLength={2}
+                    maxLength={80}
                     required
                   />
                 </div>
 
                 <div className="student-settings-field">
-                  <label htmlFor="student-email">
-                    Email address
-                  </label>
+                  <label htmlFor="student-email">Email address</label>
                   <input
                     id="student-email"
                     name="email"
                     type="email"
                     autoComplete="email"
                     value={profile.email}
-                    onChange={updateProfile}
-                    placeholder="you@example.com"
-                    maxLength={254}
-                    required
+                    readOnly
+                    aria-describedby="student-email-note"
                   />
+                  <small id="student-email-note">
+                    Email changes are not supported by the current account API.
+                  </small>
                 </div>
 
                 <div className="student-settings-field">
@@ -368,15 +519,16 @@ function StudentSettings() {
                 <div className="student-settings-form-footer">
                   <p>
                     <ShieldCheck size={16} />
-                    Profile details are stored locally in this demo.
+                    Phone, country, and bio are saved in this browser only.
                   </p>
 
                   <button
                     type="submit"
                     className="student-settings-save-button"
+                    disabled={profileSaving}
                   >
                     <Save size={17} />
-                    Save Profile
+                    {profileSaving ? "Saving Profile..." : "Save Profile"}
                   </button>
                 </div>
               </form>
@@ -387,29 +539,14 @@ function StudentSettings() {
             <article className="student-settings-panel">
               <div className="student-settings-panel-heading">
                 <div>
-                  <p className="home-section-eyebrow">
-                    ACCOUNT PROTECTION
-                  </p>
+                  <p className="home-section-eyebrow">ACCOUNT PROTECTION</p>
                   <h2>Password & Security</h2>
                   <p>
-                    Keep your account protected with a strong,
-                    unique password.
+                    Keep your account protected with a strong, unique password.
                   </p>
                 </div>
 
                 <ShieldCheck size={25} />
-              </div>
-
-              <div className="student-settings-security-notice">
-                <LockKeyhole size={21} />
-                <div>
-                  <h3>Password updates are not active yet</h3>
-                  <p>
-                    This form demonstrates the interface only. Your
-                    current password cannot be verified until the
-                    academy backend is connected.
-                  </p>
-                </div>
               </div>
 
               <form
@@ -457,6 +594,7 @@ function StudentSettings() {
                           setNotice(null);
                         }}
                         minLength={field.name === "current" ? 1 : 8}
+                        maxLength={72}
                         required
                       />
 
@@ -466,9 +604,7 @@ function StudentSettings() {
                           setShowPasswords((current) => !current)
                         }
                         aria-label={
-                          showPasswords
-                            ? "Hide passwords"
-                            : "Show passwords"
+                          showPasswords ? "Hide passwords" : "Show passwords"
                         }
                       >
                         {showPasswords ? (
@@ -484,15 +620,18 @@ function StudentSettings() {
                 <div className="student-settings-form-footer">
                   <p>
                     <LockKeyhole size={16} />
-                    Passwords are never saved by this demo.
+                    Passwords are never saved by this page.
                   </p>
 
                   <button
                     type="submit"
                     className="student-settings-save-button"
+                    disabled={passwordSaving}
                   >
                     <ShieldCheck size={17} />
-                    Validate Password Form
+                    {passwordSaving
+                      ? "Updating Password..."
+                      : "Change Password"}
                   </button>
                 </div>
               </form>
@@ -503,13 +642,11 @@ function StudentSettings() {
             <article className="student-settings-panel">
               <div className="student-settings-panel-heading">
                 <div>
-                  <p className="home-section-eyebrow">
-                    STAY INFORMED
-                  </p>
+                  <p className="home-section-eyebrow">STAY INFORMED</p>
                   <h2>Notification Preferences</h2>
                   <p>
-                    Choose which learning updates you would like
-                    enabled for your account.
+                    Choose which learning updates you would like enabled for
+                    your account.
                   </p>
                 </div>
 
@@ -554,7 +691,7 @@ function StudentSettings() {
 
                     <input
                       type="checkbox"
-                      checked={preferences[item.id]}
+                      checked={Boolean(preferences[item.id])}
                       onChange={() => updatePreference(item.id)}
                     />
                   </label>
@@ -564,16 +701,17 @@ function StudentSettings() {
               <div className="student-settings-form-footer">
                 <p>
                   <Bell size={16} />
-                  Preferences are stored locally in this demo.
+                  Preferences are stored in this browser, not on the server.
                 </p>
 
                 <button
                   type="button"
                   className="student-settings-save-button"
                   onClick={savePreferences}
+                  disabled={preferencesSaving}
                 >
                   <Save size={17} />
-                  Save Preferences
+                  {preferencesSaving ? "Saving..." : "Save Preferences"}
                 </button>
               </div>
             </article>

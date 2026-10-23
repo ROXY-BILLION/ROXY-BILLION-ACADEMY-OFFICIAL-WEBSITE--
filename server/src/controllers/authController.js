@@ -1,137 +1,177 @@
 import User from "../models/User.js";
+
 import {
-    validateRegistration,
-    validateLogin,
+  validateRegistration,
+  validateLogin,
+  validateProfileUpdate,
 } from "../validators/userValidators.js";
-import { generateToken } from "../utils/generateToken.js";
-import { validateProfileUpdate } from "../validators/userValidators.js";
+
+import {
+  generateToken,
+  verifyToken,
+} from "../utils/generateToken.js";
+
+import {
+  COOKIE_NAME,
+  setAuthCookie,
+  clearAuthCookie,
+} from "../utils/authCookie.js";
 
 const getPublicUser = (user) => ({
-    id: user._id.toString(),
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    plan: user.plan,
-    avatar: user.avatar,
-    emailVerified: user.emailVerified,
-    createdAt: user.createdAt,
+  id: user._id.toString(),
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  plan: user.plan,
+  avatar: user.avatar,
+  emailVerified: user.emailVerified,
+  createdAt: user.createdAt,
 });
 
 export const register = async (req, res, next) => {
-    try {
-        const { data, errors } = validateRegistration(req.body);
+  try {
+    const { data, errors } = validateRegistration(req.body);
 
-        if (errors.length > 0) {
-            return res.status(400).json({
-                success: false,
-                message: "Please correct the registration details.",
-                errors,
-            });
-        }
-
-        const existingUser = await User.findOne({ email: data.email });
-
-        if (existingUser) {
-            return res.status(409).json({
-                success: false,
-                message: "An account with this email already exists.",
-            });
-        }
-
-        // Only validated name, email, and password enter account creation.
-        // The User model assigns role="student" and plan="free".
-        const user = await User.create(data);
-        const token = generateToken(user._id);
-
-        return res.status(201).json({
-            success: true,
-            message: "Your account has been created successfully.",
-            token,
-            user: getPublicUser(user),
-        });
-    } catch (error) {
-        // Also handles concurrent requests for the same unique email.
-        if (error.code === 11000) {
-            return res.status(409).json({
-                success: false,
-                message: "An account with this email already exists.",
-            });
-        }
-
-        next(error);
+    if (errors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please correct the registration details.",
+        errors,
+      });
     }
+
+    const existingUser = await User.findOne({ email: data.email });
+
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: "An account with this email already exists.",
+      });
+    }
+
+    const user = await User.create(data);
+    const token = generateToken(user._id, user.tokenVersion ?? 0);
+
+    setAuthCookie(res, token, true);
+
+    return res.status(201).json({
+      success: true,
+      message: "Your account has been created successfully.",
+      user: getPublicUser(user),
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "An account with this email already exists.",
+      });
+    }
+
+    return next(error);
+  }
 };
 
 export const login = async (req, res, next) => {
-    try {
-        const { data, errors } = validateLogin(req.body);
+  try {
+    const { data, errors } = validateLogin(req.body);
 
-        if (errors.length > 0) {
-            return res.status(400).json({
-                success: false,
-                message: "Please provide a valid email and password.",
-                errors,
-            });
-        }
-
-        const user = await User.findOne({
-            email: data.email,
-        }).select("+password");
-
-        // Keep the response the same for unknown email and wrong password.
-        if (!user || !(await user.comparePassword(data.password))) {
-            return res.status(401).json({
-                success: false,
-                message: "Invalid email or password.",
-            });
-        }
-
-        if (!user.isActive) {
-            return res.status(403).json({
-                success: false,
-                message: "This account has been deactivated.",
-            });
-        }
-
-        const token = generateToken(user._id);
-
-        return res.status(200).json({
-            success: true,
-            message: "Login successful.",
-            token,
-            user: getPublicUser(user),
-        });
-    } catch (error) {
-        next(error);
+    if (errors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid email and password.",
+        errors,
+      });
     }
+
+    const user = await User.findOne({ email: data.email })
+      .select("+password +tokenVersion");
+
+    if (!user || !(await user.comparePassword(data.password))) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password.",
+      });
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: "This account has been deactivated.",
+      });
+    }
+
+    const token = generateToken(user._id, user.tokenVersion ?? 0);
+
+    setAuthCookie(res, token, req.body.rememberMe !== false);
+
+    return res.status(200).json({
+      success: true,
+      message: "Login successful.",
+      user: getPublicUser(user),
+    });
+  } catch (error) {
+    return next(error);
+  }
 };
 
 export const getMe = (req, res) => {
-    return res.status(200).json({
-        success: true,
-        user: getPublicUser(req.user),
-    });
+  return res.status(200).json({
+    success: true,
+    user: getPublicUser(req.user),
+  });
 };
 
-export const logout = (req, res) => {
-    // JWT bearer authentication is stateless.
-    // The client must discard its token after logout.
+export const logout = async (req, res, next) => {
+  try {
+    const token = req.cookies?.[COOKIE_NAME];
+
+    if (token) {
+      try {
+        const decoded = verifyToken(token);
+
+        const user = await User.findById(decoded.sub)
+          .select("+tokenVersion");
+
+        if (
+          user &&
+          (decoded.tokenVersion ?? 0) === (user.tokenVersion ?? 0)
+        ) {
+          user.tokenVersion = (user.tokenVersion ?? 0) + 1;
+          await user.save();
+        }
+      } catch (error) {
+        const invalidTokenErrors = [
+          "JsonWebTokenError",
+          "TokenExpiredError",
+          "NotBeforeError",
+        ];
+
+        if (!invalidTokenErrors.includes(error.name)) {
+          throw error;
+        }
+      }
+    }
+
+    clearAuthCookie(res);
+
     return res.status(200).json({
-        success: true,
-        message: "Logout successful. Please discard your authentication token.",
+      success: true,
+      message: "Logout successful.",
     });
+  } catch (error) {
+    return next(error);
+  }
 };
-
-
 
 export const updateProfile = async (req, res, next) => {
   try {
     const validation = validateProfileUpdate(req.body);
 
-    if (!validation.valid) {
+    if (!validation.isValid) {
       return res.status(400).json({
         success: false,
-        message: validation.message,
+        message: "Please correct your profile details.",
+        errors: validation.errors,
       });
     }
 
@@ -150,16 +190,16 @@ export const updateProfile = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: "Profile updated successfully.",
-      user: req.user.toJSON(),
+      user: getPublicUser(req.user),
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
 export const changePassword = async (req, res, next) => {
   try {
-    const { currentPassword, newPassword } = req.body;
+    const { currentPassword, newPassword } = req.body ?? {};
 
     if (
       typeof currentPassword !== "string" ||
@@ -175,7 +215,8 @@ export const changePassword = async (req, res, next) => {
       });
     }
 
-    const user = await User.findById(req.user._id).select("+password");
+    const user = await User.findById(req.user._id)
+      .select("+password +tokenVersion");
 
     if (!user || !user.isActive) {
       return res.status(401).json({
@@ -184,7 +225,8 @@ export const changePassword = async (req, res, next) => {
       });
     }
 
-    const passwordMatches = await user.comparePassword(currentPassword);
+    const passwordMatches =
+      await user.comparePassword(currentPassword);
 
     if (!passwordMatches) {
       return res.status(400).json({
@@ -194,22 +236,27 @@ export const changePassword = async (req, res, next) => {
     }
 
     user.password = newPassword;
+    user.tokenVersion = (user.tokenVersion ?? 0) + 1;
+
     await user.save();
+
+    const token = generateToken(user._id, user.tokenVersion);
+
+    // Issue a new session cookie after invalidating old tokens.
+    setAuthCookie(res, token, true);
 
     return res.status(200).json({
       success: true,
       message: "Password changed successfully.",
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
-
-
 export const deactivateAccount = async (req, res, next) => {
   try {
-    const { password } = req.body;
+    const { password } = req.body ?? {};
 
     if (typeof password !== "string" || !password) {
       return res.status(400).json({
@@ -218,7 +265,8 @@ export const deactivateAccount = async (req, res, next) => {
       });
     }
 
-    const user = await User.findById(req.user._id).select("+password");
+    const user = await User.findById(req.user._id)
+      .select("+password +tokenVersion");
 
     if (!user || !user.isActive) {
       return res.status(401).json({
@@ -237,7 +285,10 @@ export const deactivateAccount = async (req, res, next) => {
     }
 
     user.isActive = false;
+    user.tokenVersion = (user.tokenVersion ?? 0) + 1;
+
     await user.save();
+    clearAuthCookie(res);
 
     return res.status(200).json({
       success: true,
@@ -245,9 +296,6 @@ export const deactivateAccount = async (req, res, next) => {
         "Account deactivated successfully. You will no longer be able to access it.",
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
-
-
-

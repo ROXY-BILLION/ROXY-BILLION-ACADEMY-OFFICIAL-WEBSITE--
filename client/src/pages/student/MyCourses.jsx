@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   BookOpen,
@@ -7,42 +8,10 @@ import {
   PlayCircle,
   Search,
 } from "lucide-react";
-import StudentNavigation from "./StudentNavigation";
-import learningCourses from "./learningData";
-import "./MyCourses.css";
 
-const myCourses = [
-  {
-    id: 1,
-    title: "Web Development Fundamentals",
-    category: "Technology",
-    progress: 65,
-    completedLessons: 13,
-    totalLessons: 20,
-    slug: "web-development-fundamentals",
-    color: "blue",
-  },
-  {
-    id: 2,
-    title: "Introduction to Business",
-    category: "Business",
-    progress: 30,
-    completedLessons: 6,
-    totalLessons: 20,
-    slug: "introduction-to-business",
-    color: "gold",
-  },
-  {
-    id: 3,
-    title: "Creative Design Essentials",
-    category: "Creative Arts & Design",
-    progress: 10,
-    completedLessons: 2,
-    totalLessons: 20,
-    slug: "creative-design-essentials",
-    color: "purple",
-  },
-];
+import { getMyEnrollments } from "../../services/enrollmentService";
+import StudentNavigation from "./StudentNavigation";
+import "./MyCourses.css";
 
 const courseFilters = [
   "All Courses",
@@ -54,40 +23,43 @@ const courseFilters = [
 function MyCourses() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState("All Courses");
+  const [enrollments, setEnrollments] = useState([]);
+  const [loadingCourses, setLoadingCourses] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [error, setError] = useState("");
 
-  const filteredCourses = myCourses.filter((course) => {
+  const loadEnrollments = useCallback(async () => {
+    setLoadingCourses(true);
+    setError("");
+
+    try {
+      const data = await getMyEnrollments();
+      setEnrollments(data);
+      setHasLoaded(true);
+    } catch (requestError) {
+      setError(
+        requestError.message || "Unable to load your enrolled courses."
+      );
+    } finally {
+      setLoadingCourses(false);
+    }
+  }, []);
+
+  const myCourses = enrollments.filter(
+    (enrollment) => enrollment.course
+  );
+
+  const filteredCourses = myCourses.filter((enrollment) => {
+    const course = enrollment.course;
+    const search = searchTerm.trim().toLowerCase();
+
     const matchesSearch =
-      course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.category.toLowerCase().includes(searchTerm.toLowerCase());
+      (course.title || "").toLowerCase().includes(search) ||
+      (course.category || "").toLowerCase().includes(search) ||
+      (course.shortDescription || "").toLowerCase().includes(search);
 
-    const matchesFilter =
-      activeFilter === "All Courses" ||
-      (activeFilter === "In Progress" &&
-        course.progress > 0 &&
-        course.progress < 100) ||
-      (activeFilter === "Completed" && course.progress === 100) ||
-      (activeFilter === "Not Started" && course.progress === 0);
-
-    return matchesSearch && matchesFilter;
+    return matchesSearch && activeFilter === "All Courses";
   });
-
-  const completedCount = myCourses.filter(
-    (course) => course.progress === 100
-  ).length;
-
-  const inProgressCount = myCourses.filter(
-    (course) => course.progress > 0 && course.progress < 100
-  ).length;
-
-  const totalLessons = myCourses.reduce(
-    (total, course) => total + course.totalLessons,
-    0
-  );
-
-  const completedLessons = myCourses.reduce(
-    (total, course) => total + course.completedLessons,
-    0
-  );
 
   return (
     <main className="my-courses-page page-container">
@@ -106,7 +78,7 @@ function MyCourses() {
           <BookOpen size={22} />
           <div>
             <p>Total Courses</p>
-            <h2>{myCourses.length}</h2>
+            <h2>{hasLoaded ? myCourses.length : "—"}</h2>
           </div>
         </article>
 
@@ -114,7 +86,7 @@ function MyCourses() {
           <PlayCircle size={22} />
           <div>
             <p>In Progress</p>
-            <h2>{inProgressCount}</h2>
+            <h2>—</h2>
           </div>
         </article>
 
@@ -122,7 +94,7 @@ function MyCourses() {
           <GraduationCap size={22} />
           <div>
             <p>Completed</p>
-            <h2>{completedCount}</h2>
+            <h2>—</h2>
           </div>
         </article>
 
@@ -130,9 +102,7 @@ function MyCourses() {
           <Clock3 size={22} />
           <div>
             <p>Lessons Completed</p>
-            <h2>
-              {completedLessons}/{totalLessons}
-            </h2>
+            <h2>—</h2>
           </div>
         </article>
       </section>
@@ -158,109 +128,154 @@ function MyCourses() {
           </label>
         </div>
 
-        <div className="my-courses-filters" aria-label="Filter courses">
-          {courseFilters.map((filter) => (
-            <button
-              key={filter}
-              type="button"
-              className={
-                activeFilter === filter
-                  ? "my-courses-filter active"
-                  : "my-courses-filter"
-              }
-              onClick={() => setActiveFilter(filter)}
-              aria-pressed={activeFilter === filter}
-            >
-              {filter}
-            </button>
-          ))}
+        <div
+          className="my-courses-filters"
+          aria-label="Filter courses"
+        >
+          {courseFilters.map((filter) => {
+            const supported = filter === "All Courses";
+
+            return (
+              <button
+                key={filter}
+                type="button"
+                className={
+                  activeFilter === filter
+                    ? "my-courses-filter active"
+                    : "my-courses-filter"
+                }
+                onClick={() => {
+                  if (supported) setActiveFilter(filter);
+                }}
+                disabled={!supported}
+                aria-pressed={activeFilter === filter}
+                title={
+                  supported
+                    ? "Show all enrolled courses"
+                    : "Available when lesson-progress tracking is implemented"
+                }
+              >
+                {filter}
+              </button>
+            );
+          })}
         </div>
 
-        {filteredCourses.length > 0 ? (
-          <div className="my-courses-grid">
-            {filteredCourses.map((course) => {
-              const hasWorkspace = learningCourses.some(
-                (item) => item.slug === course.slug
-              );
-
-              const coursePath = hasWorkspace
-                ? `/learn/${course.slug}`
-                : `/courses/${course.slug}`;
-
-              return (
-                <article className="my-course-card" key={course.id}>
-                  <div
-                    className={`my-course-card-icon ${course.color}`}
-                  >
-                    <BookOpen size={27} />
-                  </div>
-
-                  <div className="my-course-card-content">
-                    <p className="my-course-category">
-                      {course.category}
-                    </p>
-
-                    <h3>{course.title}</h3>
-
-                    <span className="my-course-status">
-                      {course.progress === 100
-                        ? "Completed"
-                        : course.progress === 0
-                          ? "Not Started"
-                          : "In Progress"}
-                    </span>
-
-                    <div className="my-course-progress-heading">
-                      <span>Course progress</span>
-                      <strong>{course.progress}%</strong>
-                    </div>
-
-                    <div className="my-course-progress-track">
-                      <div
-                        className="my-course-progress-fill"
-                        style={{ width: `${course.progress}%` }}
-                      />
-                    </div>
-
-                    <p className="my-course-lessons">
-                      {course.completedLessons} of {course.totalLessons}{" "}
-                      lessons completed
-                    </p>
-
-                    <Link
-                      to={coursePath}
-                      className="my-course-continue"
-                    >
-                      {course.progress === 100
-                        ? "Review Course"
-                        : hasWorkspace
-                          ? "Continue Learning"
-                          : "View Course"}
-                      <PlayCircle size={18} />
-                    </Link>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        ) : (
+        {!hasLoaded && !loadingCourses && !error && (
           <div className="my-courses-empty">
             <BookOpen size={32} />
-            <h3>No courses found</h3>
+            <h3>Load your course library</h3>
             <p>
-              Try a different search term or select another filter.
+              Retrieve the courses you have enrolled in using your
+              student account.
             </p>
-
-            <button
-              type="button"
-              onClick={() => {
-                setSearchTerm("");
-                setActiveFilter("All Courses");
-              }}
-            >
-              Clear Filters
+            <button type="button" onClick={loadEnrollments}>
+              Load My Courses
             </button>
           </div>
+        )}
+
+        {loadingCourses && (
+          <p role="status">Loading your enrolled courses...</p>
+        )}
+
+        {error && (
+          <div className="my-courses-empty" role="alert">
+            <h3>Unable to load courses</h3>
+            <p>{error}</p>
+            <button
+              type="button"
+              onClick={loadEnrollments}
+              disabled={loadingCourses}
+            >
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {hasLoaded && !loadingCourses && !error && (
+          <>
+            {filteredCourses.length > 0 ? (
+              <div className="my-courses-grid">
+                {filteredCourses.map((enrollment, index) => {
+                  const course = enrollment.course;
+                  const colors = ["blue", "gold", "purple"];
+                  const color = colors[index % colors.length];
+
+                  return (
+                    <article
+                      className="my-course-card"
+                      key={enrollment._id}
+                    >
+                      <div
+                        className={`my-course-card-icon ${color}`}
+                      >
+                        <BookOpen size={27} />
+                      </div>
+
+                      <div className="my-course-card-content">
+                        <p className="my-course-category">
+                          {course.category || "Course"}
+                        </p>
+
+                        <h3>{course.title}</h3>
+
+                        <span className="my-course-status">
+                          Enrolled
+                        </span>
+
+                        <p className="my-course-lessons">
+                          Lesson progress tracking is not available yet.
+                        </p>
+
+                        <Link
+                          to={
+                            course.slug
+                              ? `/courses/${course.slug}`
+                              : "/courses"
+                          }
+                          className="my-course-continue"
+                        >
+                          View Course
+                          <PlayCircle size={18} />
+                        </Link>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="my-courses-empty">
+                <BookOpen size={32} />
+                <h3>
+                  {myCourses.length === 0
+                    ? "No enrolled courses yet"
+                    : "No courses found"}
+                </h3>
+                <p>
+                  {myCourses.length === 0
+                    ? "Browse the course catalogue and enrol in an available course to see it here."
+                    : "Try a different search term."}
+                </p>
+
+                {myCourses.length === 0 ? (
+                  <Link
+                    to="/courses"
+                    className="my-course-continue"
+                  >
+                    Browse Courses
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm("")}
+                  >
+                    Clear Search
+                  </button>
+                )}
+              </div>
+            )}
+          </>
         )}
       </section>
     </main>

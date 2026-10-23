@@ -35,7 +35,9 @@ export const forgotPassword = async (req, res, next) => {
       .digest("hex");
 
     user.resetPasswordToken = hashedToken;
-    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
+    user.resetPasswordExpires = new Date(
+      Date.now() + 15 * 60 * 1000
+    );
 
     await user.save();
 
@@ -44,9 +46,13 @@ export const forgotPassword = async (req, res, next) => {
     } catch (emailError) {
       user.resetPasswordToken = undefined;
       user.resetPasswordExpires = undefined;
+
       await user.save();
 
-      console.error("Password reset email delivery failed:", emailError.message);
+      console.error(
+        "Password reset email delivery failed:",
+        emailError.message
+      );
     }
 
     return res.status(200).json({
@@ -54,7 +60,7 @@ export const forgotPassword = async (req, res, next) => {
       message: genericMessage,
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -72,7 +78,8 @@ export const resetPassword = async (req, res, next) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "A valid reset token and password of 8–72 characters are required.",
+        message:
+          "A valid reset token and password of 8–72 characters are required.",
       });
     }
 
@@ -84,7 +91,7 @@ export const resetPassword = async (req, res, next) => {
       resetPasswordToken: hashedToken,
       resetPasswordExpires: { $gt: new Date() },
       isActive: true,
-    });
+    }).select("+tokenVersion");
 
     if (!user) {
       return res.status(400).json({
@@ -94,6 +101,7 @@ export const resetPassword = async (req, res, next) => {
     }
 
     user.password = password;
+    user.tokenVersion = (user.tokenVersion ?? 0) + 1;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
 
@@ -104,6 +112,6 @@ export const resetPassword = async (req, res, next) => {
       message: "Password reset successfully. You can now log in.",
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
